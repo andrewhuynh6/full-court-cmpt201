@@ -1,51 +1,93 @@
 // FULL COURT — Course Data & Player Generation
 
-const FIRST_NAMES = ['Marcus','Darius','Jordan','Tyrone','DeShawn','Malik','Jamal','Andre','Kevin','Chris','James','Zion','Jaylen','Trae','Isaiah','Donovan','Ja','Luka','Devin','Kawhi','Paul','Anthony','Damian','Kyrie','Bradley','OG','De\'Aaron','Shai','Scottie','Franz','Cade','Evan','Josh','Jalen','Cameron','Miles','Dwyane','LaMelo','Jrue','RJ'];
-const LAST_NAMES  = ['Williams','Johnson','Davis','Thompson','Jackson','Harris','White','Robinson','Walker','Green','Brown','Jones','Miller','Wilson','Moore','Taylor','Anderson','Thomas','Martin','Lee','Lewis','Hall','Young','Allen','King','Wright','Scott','Torres','Nguyen','Hill','Carter','Mitchell','Perez','Roberts','Turner','Phillips','Campbell','Parker','Evans','Edwards'];
-
-function randName() {
-  return FIRST_NAMES[Math.floor(Math.random()*FIRST_NAMES.length)] + ' ' + LAST_NAMES[Math.floor(Math.random()*LAST_NAMES.length)];
-}
-
-const RARITIES = ['Bronze','Silver','Gold','Diamond'];
 const POSITIONS = ['PG','SG','SF','PF','C'];
 
-function genPlayer(minOvr=55, maxOvr=65, rarity=null) {
-  const ovr = minOvr + Math.floor(Math.random()*(maxOvr-minOvr+1));
-  if (!rarity) {
-    if (ovr >= 92) rarity='Diamond';
-    else if (ovr >= 82) rarity='Gold';
-    else if (ovr >= 70) rarity='Silver';
-    else rarity='Bronze';
-  }
-  return {
-    id: 'p_'+Date.now()+'_'+Math.floor(Math.random()*9999),
-    name: randName(),
-    pos: POSITIONS[Math.floor(Math.random()*POSITIONS.length)],
-    ovr,
-    rarity,
-    num: 1+Math.floor(Math.random()*45),
-    pts: Math.floor(ovr*0.9 + Math.random()*8),
-    reb: Math.floor(ovr*0.4 + Math.random()*6),
-    ast: Math.floor(ovr*0.3 + Math.random()*5),
-  };
-}
+// ── Real NBA Players (2024-25 season) ───────────────────────────────
+// OVR tiers: Diamond 92+, Gold 82-91, Silver 70-81, Bronze 60-69
+const NBA_PLAYERS = [
+  // ── Diamond ──────────────────────────────────────────────────────
+  { id:'p_jokic',    nbaId:203999,  name:'Nikola Jokic',              pos:'C',  ovr:99, rarity:'Diamond', pts:26, reb:12, ast:9,  num:15, team:'DEN' },
+  { id:'p_sga',      nbaId:1628983, name:'Shai Gilgeous-Alexander',   pos:'PG', ovr:97, rarity:'Diamond', pts:32, reb:5,  ast:6,  num:2,  team:'OKC' },
+  { id:'p_luka',     nbaId:1629029, name:'Luka Doncic',               pos:'PG', ovr:96, rarity:'Diamond', pts:28, reb:8,  ast:8,  num:77, team:'LAL' },
+  { id:'p_giannis',  nbaId:203507,  name:'Giannis Antetokounmpo',     pos:'PF', ovr:95, rarity:'Diamond', pts:28, reb:11, ast:6,  num:34, team:'MIL' },
+  { id:'p_tatum',    nbaId:1628369, name:'Jayson Tatum',              pos:'SF', ovr:94, rarity:'Diamond', pts:27, reb:8,  ast:5,  num:0,  team:'BOS' },
+  { id:'p_wemby',    nbaId:1641705, name:'Victor Wembanyama',         pos:'C',  ovr:94, rarity:'Diamond', pts:25, reb:11, ast:4,  num:1,  team:'SAS' },
+  { id:'p_cade',     nbaId:1630595, name:'Cade Cunningham',           pos:'PG', ovr:93, rarity:'Diamond', pts:26, reb:5,  ast:9,  num:2,  team:'DET' },
+  // ── Gold ─────────────────────────────────────────────────────────
+  { id:'p_durant',   nbaId:201142,  name:'Kevin Durant',              pos:'SF', ovr:91, rarity:'Gold',    pts:27, reb:6,  ast:4,  num:35, team:'PHX' },
+  { id:'p_adavis',   nbaId:203076,  name:'Anthony Davis',             pos:'C',  ovr:91, rarity:'Gold',    pts:26, reb:12, ast:3,  num:3,  team:'LAL' },
+  { id:'p_embiid',   nbaId:203954,  name:'Joel Embiid',               pos:'C',  ovr:90, rarity:'Gold',    pts:24, reb:11, ast:4,  num:21, team:'PHI' },
+  { id:'p_curry',    nbaId:201939,  name:'Stephen Curry',             pos:'PG', ovr:90, rarity:'Gold',    pts:26, reb:4,  ast:6,  num:30, team:'GSW' },
+  { id:'p_lebron',   nbaId:2544,    name:'LeBron James',              pos:'SF', ovr:88, rarity:'Gold',    pts:24, reb:7,  ast:8,  num:23, team:'LAL' },
+  { id:'p_booker',   nbaId:1626164, name:'Devin Booker',              pos:'SG', ovr:88, rarity:'Gold',    pts:26, reb:5,  ast:6,  num:1,  team:'PHX' },
+  { id:'p_lamelo',   nbaId:1630163, name:'LaMelo Ball',               pos:'PG', ovr:88, rarity:'Gold',    pts:28, reb:6,  ast:9,  num:1,  team:'CHA' },
+  { id:'p_morant',   nbaId:1629630, name:'Ja Morant',                 pos:'PG', ovr:87, rarity:'Gold',    pts:25, reb:5,  ast:9,  num:12, team:'MEM' },
+  { id:'p_haliburton',nbaId:1630169,name:'Tyrese Haliburton',         pos:'PG', ovr:87, rarity:'Gold',    pts:19, reb:4,  ast:11, num:0,  team:'IND' },
+  { id:'p_lillard',  nbaId:203081,  name:'Damian Lillard',            pos:'PG', ovr:86, rarity:'Gold',    pts:25, reb:4,  ast:7,  num:0,  team:'MIL' },
+  { id:'p_towns',    nbaId:1626157, name:'Karl-Anthony Towns',        pos:'C',  ovr:86, rarity:'Gold',    pts:25, reb:13, ast:4,  num:32, team:'NYK' },
+  { id:'p_mitchell', nbaId:1628378, name:'Donovan Mitchell',          pos:'SG', ovr:86, rarity:'Gold',    pts:25, reb:4,  ast:5,  num:45, team:'CLE' },
+  { id:'p_mobley',   nbaId:1630596, name:'Evan Mobley',               pos:'PF', ovr:85, rarity:'Gold',    pts:19, reb:10, ast:3,  num:4,  team:'CLE' },
+  { id:'p_adebayo',  nbaId:1628389, name:'Bam Adebayo',               pos:'C',  ovr:85, rarity:'Gold',    pts:19, reb:11, ast:4,  num:13, team:'MIA' },
+  { id:'p_kyrie',    nbaId:202681,  name:'Kyrie Irving',              pos:'PG', ovr:85, rarity:'Gold',    pts:25, reb:5,  ast:6,  num:11, team:'DAL' },
+  { id:'p_trae',     nbaId:1629027, name:'Trae Young',                pos:'PG', ovr:84, rarity:'Gold',    pts:23, reb:3,  ast:11, num:11, team:'ATL' },
+  { id:'p_garland',  nbaId:1629636, name:'Darius Garland',            pos:'PG', ovr:83, rarity:'Gold',    pts:22, reb:3,  ast:7,  num:10, team:'CLE' },
+  { id:'p_banchero', nbaId:1631094, name:'Paolo Banchero',            pos:'PF', ovr:83, rarity:'Gold',    pts:25, reb:7,  ast:5,  num:5,  team:'ORL' },
+  { id:'p_sengun',   nbaId:1630578, name:'Alperen Sengun',            pos:'C',  ovr:83, rarity:'Gold',    pts:22, reb:9,  ast:4,  num:28, team:'HOU' },
+  { id:'p_pg',       nbaId:202331,  name:'Paul George',               pos:'SF', ovr:82, rarity:'Gold',    pts:19, reb:5,  ast:3,  num:8,  team:'PHI' },
+  // ── Silver ───────────────────────────────────────────────────────
+  { id:'p_butler',   nbaId:202710,  name:'Jimmy Butler',              pos:'SF', ovr:81, rarity:'Silver',  pts:19, reb:5,  ast:5,  num:22, team:'GSW' },
+  { id:'p_dafox',    nbaId:1628368, name:"De'Aaron Fox",              pos:'PG', ovr:80, rarity:'Silver',  pts:24, reb:4,  ast:6,  num:5,  team:'SAC' },
+  { id:'p_herro',    nbaId:1629638, name:'Tyler Herro',               pos:'SG', ovr:79, rarity:'Silver',  pts:22, reb:4,  ast:5,  num:14, team:'MIA' },
+  { id:'p_anunoby',  nbaId:1628384, name:'OG Anunoby',                pos:'SF', ovr:79, rarity:'Silver',  pts:15, reb:5,  ast:2,  num:8,  team:'NYK' },
+  { id:'p_barnes',   nbaId:1630567, name:'Scottie Barnes',            pos:'PF', ovr:79, rarity:'Silver',  pts:19, reb:7,  ast:5,  num:4,  team:'TOR' },
+  { id:'p_franz',    nbaId:1630532, name:'Franz Wagner',              pos:'SF', ovr:79, rarity:'Silver',  pts:24, reb:5,  ast:4,  num:21, team:'ORL' },
+  { id:'p_jallen',   nbaId:1628386, name:'Jarrett Allen',             pos:'C',  ovr:78, rarity:'Silver',  pts:14, reb:11, ast:2,  num:31, team:'CLE' },
+  { id:'p_jgreen',   nbaId:1630224, name:'Jalen Green',               pos:'SG', ovr:78, rarity:'Silver',  pts:22, reb:4,  ast:4,  num:4,  team:'HOU' },
+  { id:'p_barrett',  nbaId:1629628, name:'RJ Barrett',                pos:'SG', ovr:77, rarity:'Silver',  pts:19, reb:5,  ast:4,  num:9,  team:'TOR' },
+  { id:'p_draymond', nbaId:203110,  name:'Draymond Green',            pos:'PF', ovr:76, rarity:'Silver',  pts:9,  reb:7,  ast:7,  num:23, team:'GSW' },
+  { id:'p_mturner',  nbaId:1626167, name:'Myles Turner',              pos:'C',  ovr:75, rarity:'Silver',  pts:14, reb:7,  ast:1,  num:33, team:'IND' },
+  { id:'p_sochan',   nbaId:1631109, name:'Jeremy Sochan',             pos:'PF', ovr:73, rarity:'Silver',  pts:14, reb:6,  ast:4,  num:10, team:'SAS' },
+  { id:'p_ivey',     nbaId:1631093, name:'Jaden Ivey',                pos:'PG', ovr:72, rarity:'Silver',  pts:15, reb:4,  ast:5,  num:23, team:'DET' },
+  { id:'p_smith',    nbaId:1631105, name:'Jabari Smith Jr.',          pos:'PF', ovr:71, rarity:'Silver',  pts:14, reb:7,  ast:2,  num:1,  team:'HOU' },
+  // ── Bronze ───────────────────────────────────────────────────────
+  { id:'p_brogdon',  nbaId:1627763, name:'Malcolm Brogdon',           pos:'PG', ovr:68, rarity:'Bronze',  pts:12, reb:3,  ast:4,  num:7,  team:'POR' },
+  { id:'p_dosunmu',  nbaId:1630558, name:'Ayo Dosunmu',               pos:'SG', ovr:67, rarity:'Bronze',  pts:12, reb:3,  ast:4,  num:11, team:'CHI' },
+  { id:'p_vucevic',  nbaId:203085,  name:'Nikola Vucevic',            pos:'C',  ovr:66, rarity:'Bronze',  pts:14, reb:10, ast:3,  num:9,  team:'CHI' },
+  { id:'p_okoro',    nbaId:1630171, name:'Isaac Okoro',               pos:'SG', ovr:66, rarity:'Bronze',  pts:9,  reb:3,  ast:2,  num:35, team:'CLE' },
+  { id:'p_walker',   nbaId:1629611, name:'Nickeil Alexander-Walker',  pos:'SF', ovr:63, rarity:'Bronze',  pts:9,  reb:2,  ast:3,  num:0,  team:'MIN' },
+  { id:'p_thad',     nbaId:201152,  name:'Thaddeus Young',            pos:'PF', ovr:62, rarity:'Bronze',  pts:7,  reb:4,  ast:2,  num:21, team:'SAS' },
+];
 
 function genStarterTeam() {
+  const used = new Set();
   return POSITIONS.map(pos => {
-    const p = genPlayer(55,65,'Bronze');
-    p.pos = pos;
-    return p;
+    // Pick lowest-OVR player at this position not yet used
+    const candidates = NBA_PLAYERS
+      .filter(p => p.pos === pos && !used.has(p.id))
+      .sort((a, b) => a.ovr - b.ovr);
+    const template = candidates[0] ||
+      NBA_PLAYERS.filter(p => !used.has(p.id)).sort((a, b) => a.ovr - b.ovr)[0];
+    if (!template) return { id:'st_'+pos, name:'Rookie', pos, ovr:60, rarity:'Bronze', pts:9, reb:3, ast:2, num:0 };
+    used.add(template.id);
+    return { ...template, id: 'st_' + pos + '_' + template.id };
   });
 }
 
 function genPackCard(packType) {
-  switch(packType) {
-    case 'Diamond Premium': return genPlayer(90,99,'Diamond');
-    case 'Gold Pack':       return genPlayer(80,92,'Gold');
-    case 'Silver Pack':     return genPlayer(70,82,'Silver');
-    default:                return genPlayer(60,72,'Bronze');
+  const rarityMap = {
+    'Diamond Premium': 'Diamond',
+    'Gold Pack':       'Gold',
+    'Silver Pack':     'Silver',
+    'Bronze Pack':     'Bronze',
+  };
+  const rarity = rarityMap[packType] || 'Bronze';
+  const pool = NBA_PLAYERS.filter(p => p.rarity === rarity);
+  if (!pool.length) {
+    // No real players for this tier — shouldn't happen but safe fallback
+    return { id:'gen_'+Date.now(), name:'Unknown', pos:'PG', ovr:65, rarity, pts:10, reb:3, ast:3, num:0 };
   }
+  const template = pool[Math.floor(Math.random() * pool.length)];
+  return { ...template, id: 'card_' + Date.now() + '_' + Math.floor(Math.random()*9999) };
 }
 
 // ── COURSE CONTENT ──────────────────────────────────────────────

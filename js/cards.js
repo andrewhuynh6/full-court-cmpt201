@@ -39,14 +39,24 @@ function playerSVG(pos, num) {
 
 function buildCard(player, size='') {
   const cls = size === 'lg' ? 'card ' + player.rarity + ' card-lg' : 'card ' + player.rarity;
+  const imgSize = size === 'lg' ? '1040x760' : '260x190';
+  let artHTML;
+  if (player.nbaId) {
+    const src = `https://cdn.nba.com/headshots/nba/latest/${imgSize}/${player.nbaId}.png`;
+    artHTML = `<img class="player-headshot" src="${src}" alt="${player.name}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="card-art-fallback">${playerSVG(player.pos, player.num)}</div>`;
+  } else {
+    artHTML = `<div class="card-art-fallback" style="display:flex">${playerSVG(player.pos, player.num)}</div>`;
+  }
   return `<div class="${cls}" data-id="${player.id}">
     <div class="card-inner">
       <div class="card-ovr">${player.ovr}</div>
       <div class="card-pos">${player.pos}</div>
-      <div class="card-art">${playerSVG(player.pos, player.num)}</div>
+      <div class="card-art">${artHTML}</div>
       <div class="card-footer">
         <div class="card-name">${player.name}</div>
-        <div class="card-rarity">${player.rarity}</div>
+        <div class="card-rarity">${player.rarity}${player.team ? ' · ' + player.team : ''}</div>
         <div class="card-stats">
           <span class="card-stat">PTS <span>${player.pts}</span></span>
           <span class="card-stat">REB <span>${player.reb}</span></span>
