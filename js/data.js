@@ -100,20 +100,43 @@ const CHAPTERS = [
   {
     id:'l1_1', title:'Pointers & Memory',
     learn:`<h3>What is a Pointer?</h3>
-<p>A pointer is a variable that stores the <strong>memory address</strong> of another variable.</p>
+<p>A pointer is a variable that stores the <strong>memory address</strong> of another variable. Every variable lives somewhere in RAM — a pointer lets you hold and pass that location.</p>
 <div class="code-block">int x = 42;
-int *p = &amp;x;   // p holds address of x
-printf("%d", *p); // dereference: prints 42
-printf("%p", p);  // prints address like 0x7fff...</div>
+int *p = &amp;x;      // &x = address of x (e.g. 0x7ffd1234)
+printf("%d", *p);  // dereference → 42
+printf("%p", p);   // prints the address
+*p = 99;           // changes x through the pointer
+printf("%d", x);   // prints 99</div>
 <h3>Key Operators</h3>
 <ul>
-<li><code>&amp;</code> — address-of: gives you the address of a variable</li>
-<li><code>*</code> — dereference: gives you the value at an address</li>
+<li><code>&amp;</code> — <em>address-of</em>: returns the memory address of a variable</li>
+<li><code>*</code> — <em>dereference</em>: follows the address to get (or set) the value</li>
+<li><code>-&gt;</code> — shorthand for <code>(*ptr).field</code> on structs</li>
 </ul>
+<h3>Pointer Types Matter</h3>
+<p>The type tells the compiler how many bytes to read and how far to step in pointer arithmetic.</p>
+<div class="code-block">int  *ip;   // 4 bytes per step
+char *cp;   // 1 byte per step
+double *dp; // 8 bytes per step
+void *vp;   // generic — must cast before dereferencing</div>
+<h3>Pointer Arithmetic & Arrays</h3>
+<p>An array name <em>decays</em> to a pointer to its first element. Arithmetic scales by the pointed-to type's size.</p>
 <div class="code-block">int arr[5] = {10,20,30,40,50};
-int *p = arr;    // arr decays to &arr[0]
-printf("%d", *(p+2)); // prints 30 — pointer arithmetic</div>
-<div class="tip-box">💡 <strong>Tip:</strong> Pointer arithmetic adds in units of the pointed-to type. <code>p+1</code> advances by <code>sizeof(int)</code> bytes.</div>`,
+int *p = arr;          // same as &arr[0]
+printf("%d", *(p+2));  // 30  — same as arr[2]
+printf("%d", p[3]);    // 40  — [] is syntactic sugar for *(p+3)
+p++;                   // now points to arr[1]</div>
+<h3>Pointers to Pointers</h3>
+<div class="code-block">int x = 5;
+int *p  = &amp;x;
+int **pp = &amp;p;   // pointer to pointer
+printf("%d", **pp); // 5 — double dereference</div>
+<div class="tip-box">⚠️ <strong>Common Bugs:</strong> (1) Dereferencing NULL — always segfaults. (2) Using an uninitialized pointer — reads garbage address. (3) Returning a pointer to a local variable — the stack frame is gone after the function returns. Always initialize pointers to NULL if you don't have an address yet.</div>
+<h3>Function Pointers</h3>
+<p>Functions live in memory too. A function pointer stores a function's address, enabling callbacks and dispatch tables.</p>
+<div class="code-block">int add(int a, int b) { return a + b; }
+int (*fp)(int, int) = add;  // declare + assign
+printf("%d", fp(3, 4));     // 7</div>`,
     practice:[
       {q:"What does the & operator do?",opts:["Dereferences a pointer","Gets the memory address of a variable","Performs bitwise AND","Allocates memory"],ans:1,exp:"& is the address-of operator. It returns the memory address where a variable is stored."},
       {q:"int *p = &x; What does *p do?",opts:["Gets address of p","Declares a new int","Accesses the value that p points to","Multiplies p by x"],ans:2,exp:"*p dereferences the pointer — it accesses the value stored at the address p holds."},
@@ -129,22 +152,55 @@ printf("%d", *(p+2)); // prints 30 — pointer arithmetic</div>
   },
   {
     id:'l1_2', title:'Dynamic Memory Allocation',
-    learn:`<h3>Heap vs Stack</h3>
-<p>Stack memory is automatically managed (function call frames). <strong>Heap</strong> memory is manually managed — you request and free it yourself.</p>
-<div class="code-block">#include &lt;stdlib.h&gt;
+    learn:`<h3>Stack vs Heap</h3>
+<p><strong>Stack</strong> memory is automatic — the OS allocates and frees it as functions enter and return. It's fast but limited (~1–8 MB) and cannot outlive the function. <strong>Heap</strong> memory is manually managed via <code>malloc</code>/<code>free</code> — you control its lifetime and size.</p>
+<div class="code-block">// Stack: automatic, fast, limited
+void foo() {
+    int arr[1000];  // gone when foo() returns
+}
 
-int *p = malloc(sizeof(int) * 10);  // allocate 10 ints
-if (!p) { perror("malloc"); exit(1); }
-p[0] = 42;
-free(p);   // ALWAYS free when done</div>
-<h3>Key Functions</h3>
+// Heap: manual, unlimited, persists until freed
+int *arr = malloc(sizeof(int) * 1000000);
+if (!arr) { perror("malloc"); exit(1); }
+arr[0] = 42;
+free(arr);  // REQUIRED</div>
+<h3>The Four Heap Functions</h3>
 <ul>
-<li><code>malloc(size)</code> — allocate uninitialized memory</li>
-<li><code>calloc(n, size)</code> — allocate n elements, zeroed</li>
-<li><code>realloc(ptr, newsize)</code> — resize allocation</li>
-<li><code>free(ptr)</code> — release memory</li>
+<li><code>malloc(size)</code> — allocate <em>size</em> bytes, <strong>uninitialized</strong> (may contain garbage)</li>
+<li><code>calloc(n, size)</code> — allocate n×size bytes, <strong>zeroed</strong></li>
+<li><code>realloc(ptr, newsize)</code> — grow or shrink an existing allocation; may move it</li>
+<li><code>free(ptr)</code> — return memory to the heap; ptr must be from malloc/calloc/realloc</li>
 </ul>
-<div class="tip-box">⚠️ <strong>Warning:</strong> Memory leaks happen when you malloc but never free. Use Valgrind to detect leaks!</div>`,
+<div class="code-block">// Safe realloc pattern — never do ptr = realloc(ptr, n)
+int *tmp = realloc(arr, sizeof(int) * new_size);
+if (!tmp) { free(arr); exit(1); }  // keep old ptr valid!
+arr = tmp;</div>
+<h3>Common Memory Bugs</h3>
+<ul>
+<li><strong>Memory leak</strong> — malloc with no matching free; memory fills up over time</li>
+<li><strong>Use-after-free</strong> — accessing memory after free(); undefined behavior</li>
+<li><strong>Double-free</strong> — calling free() twice on same pointer; often crashes</li>
+<li><strong>Buffer overflow</strong> — writing past the end of an allocation; corrupts heap</li>
+<li><strong>Null dereference</strong> — not checking malloc's return value before using it</li>
+</ul>
+<div class="code-block">// WRONG — use-after-free
+int *p = malloc(4);
+free(p);
+*p = 5;  // undefined behavior!
+
+// WRONG — double-free
+free(p);
+free(p);  // crash!
+
+// RIGHT — set to NULL after free
+free(p);
+p = NULL;  // safe: free(NULL) is a no-op</div>
+<h3>Detecting Bugs with Valgrind</h3>
+<div class="code-block">gcc -g prog.c -o prog
+valgrind --leak-check=full ./prog
+# Output: "definitely lost: 40 bytes in 1 blocks"
+# → you malloc'd 40 bytes and never freed them</div>
+<div class="tip-box">💡 <strong>Golden Rule:</strong> Every malloc() needs exactly one free(). Design your code so it's clear which function "owns" each allocation and is responsible for freeing it.</div>`,
     practice:[
       {q:"Which function allocates zeroed memory?",opts:["malloc","calloc","realloc","alloc"],ans:1,exp:"calloc(n, size) allocates n×size bytes and zeros them. malloc does not zero memory."},
       {q:"What must you always do after malloc?",opts:["Call realloc","Call free when done","Call calloc","Re-declare the pointer"],ans:1,exp:"Every malloc must have a matching free to avoid memory leaks."},
@@ -167,23 +223,46 @@ free(p);   // ALWAYS free when done</div>
   {
     id:'l2_1', title:'Processes',
     learn:`<h3>What is a Process?</h3>
-<p>A process is a running instance of a program. Each has its own address space, file descriptors, and state. Use <code>fork()</code> to create a child process.</p>
+<p>A process is a running instance of a program with its own: virtual address space, file descriptor table, PID, environment variables, signal handlers, and resource limits. Processes are isolated — a crash in one does not affect another.</p>
+<h3>fork() — Creating a Child</h3>
+<p><code>fork()</code> creates an exact copy of the calling process. It returns <strong>twice</strong>: once in the parent (returns child's PID) and once in the child (returns 0).</p>
 <div class="code-block">pid_t pid = fork();
-if (pid == -1) { perror("fork"); exit(1); }
+if (pid == -1) { perror("fork"); exit(1); }  // error
 if (pid == 0) {
-    printf("Child PID: %d\\n", getpid());
+    // --- CHILD ---
+    printf("Child: PID=%d, parent=%d\\n", getpid(), getppid());
     exit(0);
 } else {
-    wait(NULL); // parent waits for child
-    printf("Child done\\n");
+    // --- PARENT ---
+    int status;
+    waitpid(pid, &amp;status, 0);  // wait for specific child
+    if (WIFEXITED(status))
+        printf("Child exited: %d\\n", WEXITSTATUS(status));
 }</div>
-<h3>Key Points</h3>
+<h3>exec() — Replacing a Process</h3>
+<p><code>exec()</code> replaces the current process image with a new program. The PID stays the same but all code, data, and stack are replaced. The usual pattern is fork() then exec().</p>
+<div class="code-block">// exec variants: execv, execl, execvp, execve
+char *args[] = {"/bin/ls", "-l", NULL};
+execv("/bin/ls", args);  // replaces this process
+// If we get here, exec failed
+perror("execv"); exit(1);</div>
+<h3>Zombie vs Orphan Processes</h3>
 <ul>
-<li>fork() returns 0 to child, child's PID to parent</li>
-<li>Child gets a COPY of parent's address space</li>
-<li>Use wait()/waitpid() to reap zombies</li>
-<li>execv() replaces the process image</li>
-</ul>`,
+<li><strong>Zombie:</strong> child has exited but parent hasn't called wait(). The process table entry stays. Fix: always call wait()/waitpid().</li>
+<li><strong>Orphan:</strong> parent exits before child. The child is adopted by init (PID 1) which will reap it.</li>
+</ul>
+<h3>Process States</h3>
+<ul>
+<li><strong>Running:</strong> executing on a CPU</li>
+<li><strong>Sleeping (blocked):</strong> waiting for I/O, a signal, or a lock</li>
+<li><strong>Stopped:</strong> paused by SIGSTOP or SIGTSTP</li>
+<li><strong>Zombie:</strong> exited but not yet reaped</li>
+</ul>
+<div class="code-block">// waitpid options
+waitpid(-1, &amp;status, 0);       // wait for any child
+waitpid(pid, &amp;status, WNOHANG); // non-blocking check
+// WIFEXITED(s), WEXITSTATUS(s), WIFSIGNALED(s), WTERMSIG(s)</div>
+<div class="tip-box">💡 <strong>Key Rule:</strong> fork() copies the entire address space using copy-on-write (COW) — physical pages are shared until one process writes, then a private copy is made. This makes fork() cheap even for large processes.</div>`,
     practice:[
       {q:"What does fork() return to the parent?",opts:["0","Child's PID","-1","1"],ans:1,exp:"fork() returns the child's PID to the parent and 0 to the child. -1 means error."},
       {q:"What is a zombie process?",opts:["A process that loops forever","A process that has exited but hasn't been wait()ed","A process without a parent","A process consuming high CPU"],ans:1,exp:"A zombie is a terminated process whose parent hasn't called wait() yet. Its entry stays in the process table."},
@@ -199,23 +278,59 @@ if (pid == 0) {
   },
   {
     id:'l2_2', title:'Threads (pthreads)',
-    learn:`<h3>What is a Thread?</h3>
-<p>A thread is an independent execution path within a process. Threads share the same heap, globals, and file descriptors but have their own stack and registers.</p>
+    learn:`<h3>Threads vs Processes</h3>
+<p>A thread is an independent execution path within a process. Unlike processes, threads <strong>share</strong> heap, globals, and file descriptors — communication is easy but requires synchronization. Each thread has its <strong>own</strong> stack, registers, and program counter.</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin:10px 0">
+<tr style="background:var(--panel3)"><th style="padding:6px;text-align:left">Feature</th><th style="padding:6px">Process</th><th style="padding:6px">Thread</th></tr>
+<tr><td style="padding:6px">Address space</td><td style="padding:6px;text-align:center">Separate</td><td style="padding:6px;text-align:center">Shared</td></tr>
+<tr style="background:var(--panel2)"><td style="padding:6px">Creation cost</td><td style="padding:6px;text-align:center">High (fork)</td><td style="padding:6px;text-align:center">Low</td></tr>
+<tr><td style="padding:6px">Communication</td><td style="padding:6px;text-align:center">IPC needed</td><td style="padding:6px;text-align:center">Direct (shared mem)</td></tr>
+<tr style="background:var(--panel2)"><td style="padding:6px">Failure isolation</td><td style="padding:6px;text-align:center">Strong</td><td style="padding:6px;text-align:center">Weak (crash = all die)</td></tr>
+</table>
+<h3>Creating & Joining Threads</h3>
 <div class="code-block">// Compile: gcc prog.c -pthread
 #include &lt;pthread.h&gt;
 
 void *worker(void *arg) {
-    printf("Thread running\\n");
-    return NULL;
+    int id = *(int*)arg;
+    printf("Thread %d running\\n", id);
+    int *result = malloc(sizeof(int));
+    *result = id * 2;
+    return result;  // returned to pthread_join
 }
 
 int main() {
     pthread_t tid;
-    pthread_create(&amp;tid, NULL, worker, NULL);
-    pthread_join(tid, NULL); // wait for thread
+    int arg = 5;
+    pthread_create(&amp;tid, NULL, worker, &amp;arg);
+
+    void *retval;
+    pthread_join(tid, &amp;retval);  // blocks until thread exits
+    printf("Result: %d\\n", *(int*)retval);
+    free(retval);
     return 0;
 }</div>
-<div class="tip-box">⚠️ <strong>Race Condition:</strong> When two threads access shared data concurrently and at least one writes, results are non-deterministic. Use synchronization!</div>`,
+<h3>Multiple Threads with a Loop</h3>
+<div class="code-block">#define N 4
+pthread_t tids[N];
+int ids[N];
+for (int i = 0; i &lt; N; i++) {
+    ids[i] = i;
+    pthread_create(&amp;tids[i], NULL, worker, &amp;ids[i]);
+}
+for (int i = 0; i &lt; N; i++)
+    pthread_join(tids[i], NULL);</div>
+<h3>Race Conditions</h3>
+<p>When two threads read-modify-write shared data without synchronization, results are non-deterministic:</p>
+<div class="code-block">int counter = 0;  // shared global
+
+void *increment(void *arg) {
+    for (int i = 0; i &lt; 100000; i++)
+        counter++;  // NOT atomic! read-modify-write
+    return NULL;
+}
+// Two threads → counter might be 150000 instead of 200000!</div>
+<div class="tip-box">⚠️ <strong>Thread safety rules:</strong> (1) Local variables are always safe — each thread has its own stack. (2) Read-only global data is safe. (3) Any write to shared data needs synchronization. (4) A detached thread (pthread_detach) cannot be joined and cleans up automatically.</div>`,
     practice:[
       {q:"What do threads share within a process?",opts:["Stack and registers","Heap and global variables","Program counter","Thread ID"],ans:1,exp:"Threads share heap, globals, file descriptors, and code. Each has its own stack, registers, and PC."},
       {q:"pthread_join() does what?",opts:["Creates a thread","Kills a thread","Blocks caller until the thread finishes","Detaches a thread"],ans:2,exp:"pthread_join blocks the calling thread until the specified thread terminates."},
@@ -231,16 +346,64 @@ int main() {
   },
   {
     id:'l2_3', title:'Mutex Synchronization',
-    learn:`<h3>Mutual Exclusion</h3>
-<p>A mutex ensures only one thread executes a <strong>critical section</strong> at a time.</p>
-<div class="code-block">pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    learn:`<h3>What is a Mutex?</h3>
+<p>A <strong>mutex</strong> (mutual exclusion lock) ensures that only one thread executes a <em>critical section</em> at a time. A critical section is any code that accesses shared mutable data.</p>
+<div class="code-block">pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; // static init
 
-pthread_mutex_lock(&amp;lock);
-/* -- critical section -- */
-shared_counter++;
-/* ----------------------- */
-pthread_mutex_unlock(&amp;lock);</div>
-<div class="tip-box">🔴 <strong>Deadlock:</strong> Thread A holds lock1, waits for lock2. Thread B holds lock2, waits for lock1. Neither can proceed. Prevention: always acquire locks in the same order.</div>`,
+// Or dynamic init:
+pthread_mutex_t lock;
+pthread_mutex_init(&amp;lock, NULL);
+
+// Use it:
+pthread_mutex_lock(&amp;lock);    // blocks if another thread holds it
+shared_counter++;              // critical section — now safe
+pthread_mutex_unlock(&amp;lock);  // release
+
+// Always destroy when done:
+pthread_mutex_destroy(&amp;lock);</div>
+<h3>Fixing the Race Condition</h3>
+<div class="code-block">pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+int counter = 0;
+
+void *increment(void *arg) {
+    for (int i = 0; i &lt; 100000; i++) {
+        pthread_mutex_lock(&amp;mtx);
+        counter++;              // now atomic
+        pthread_mutex_unlock(&amp;mtx);
+    }
+    return NULL;
+}
+// Two threads → counter is always exactly 200000</div>
+<h3>Deadlock</h3>
+<p>Deadlock occurs when threads form a <em>circular wait</em> — each thread holds a lock and waits for another lock that another thread holds.</p>
+<div class="code-block">// DEADLOCK SCENARIO:
+// Thread A: lock(L1); lock(L2); ...
+// Thread B: lock(L2); lock(L1); ...
+// A holds L1, waits for L2. B holds L2, waits for L1. → Stuck forever.
+
+// PREVENTION: Always acquire locks in the same order
+// Thread A and B both: lock(L1) then lock(L2)</div>
+<h3>trylock and timed variants</h3>
+<div class="code-block">// Non-blocking: returns EBUSY immediately if locked
+if (pthread_mutex_trylock(&amp;lock) == 0) {
+    // got the lock
+    pthread_mutex_unlock(&amp;lock);
+} else {
+    // lock was busy, do something else
+}</div>
+<h3>Read-Write Locks</h3>
+<p>When reads are frequent and writes are rare, a read-write lock allows multiple concurrent readers but exclusive writers:</p>
+<div class="code-block">pthread_rwlock_t rwl = PTHREAD_RWLOCK_INITIALIZER;
+// Multiple threads can hold the read lock simultaneously:
+pthread_rwlock_rdlock(&amp;rwl);  // shared
+// ... read shared data ...
+pthread_rwlock_unlock(&amp;rwl);
+
+// Only one thread gets the write lock:
+pthread_rwlock_wrlock(&amp;rwl);  // exclusive
+// ... modify shared data ...
+pthread_rwlock_unlock(&amp;rwl);</div>
+<div class="tip-box">💡 <strong>Best practices:</strong> Keep critical sections as short as possible. Never call a blocking function (sleep, I/O) while holding a mutex. Set to NULL after destroy. Prefer PTHREAD_MUTEX_INITIALIZER for globals.</div>`,
     practice:[
       {q:"What does pthread_mutex_lock() do when the mutex is locked?",opts:["Returns -1","Crashes","Blocks until available","Steals the lock"],ans:2,exp:"mutex_lock blocks the calling thread until the mutex is released."},
       {q:"What is a deadlock?",opts:["A slow thread","Circular wait where no thread can proceed","A thread holding a lock too long","A mutex not initialized"],ans:1,exp:"Deadlock is a circular wait: each thread holds a lock and waits for another lock held by another thread."},
@@ -257,19 +420,56 @@ pthread_mutex_unlock(&amp;lock);</div>
   {
     id:'l2_4', title:'Semaphores & Condition Variables',
     learn:`<h3>Semaphores</h3>
-<p>A semaphore is a counter. <code>sem_wait()</code> decrements (blocks if 0). <code>sem_post()</code> increments.</p>
-<div class="code-block">sem_t sem;
-sem_init(&amp;sem, 0, 1);
-sem_wait(&amp;sem);  // P / down
+<p>A semaphore is an integer counter with two atomic operations: <code>sem_wait()</code> (decrement; block if zero) and <code>sem_post()</code> (increment; wake a waiter). Unlike a mutex, a semaphore can be signaled from a different thread than the one that waited — great for signaling events.</p>
+<div class="code-block">#include &lt;semaphore.h&gt;
+sem_t sem;
+sem_init(&amp;sem, 0, 1);  // pshared=0 (threads), initial=1
+sem_wait(&amp;sem);  // P (down): blocks if value==0, then decrements
 // ... critical work ...
-sem_post(&amp;sem);  // V / up</div>
+sem_post(&amp;sem);  // V (up): increments and wakes one waiter
+sem_destroy(&amp;sem);</div>
+<h3>Producer-Consumer with Semaphores</h3>
+<p>Classic pattern: producer fills a bounded buffer, consumer drains it. Three semaphores coordinate access:</p>
+<div class="code-block">#define N 10
+int buf[N]; int in=0, out=0;
+sem_t empty, full;    pthread_mutex_t mtx;
+sem_init(&amp;empty, 0, N);  // N slots free
+sem_init(&amp;full,  0, 0);  // 0 items ready
+pthread_mutex_init(&amp;mtx, NULL);
+
+// Producer:
+sem_wait(&amp;empty);         // wait for free slot
+pthread_mutex_lock(&amp;mtx);
+buf[in] = item; in = (in+1)%N;
+pthread_mutex_unlock(&amp;mtx);
+sem_post(&amp;full);          // signal item added
+
+// Consumer:
+sem_wait(&amp;full);          // wait for item
+pthread_mutex_lock(&amp;mtx);
+item = buf[out]; out = (out+1)%N;
+pthread_mutex_unlock(&amp;mtx);
+sem_post(&amp;empty);         // signal slot freed</div>
 <h3>Condition Variables</h3>
-<p><code>pthread_cond_wait</code> atomically releases the mutex AND sleeps — no race!</p>
-<div class="code-block">pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_lock(&amp;m);
-while (!ready) pthread_cond_wait(&amp;cond, &amp;m); // while, not if!
-pthread_mutex_unlock(&amp;m);</div>
-<div class="tip-box">⚠️ Always use <strong>while</strong> (not if) with cond_wait — threads can wake spuriously!</div>`,
+<p>A condition variable lets a thread sleep until some condition becomes true. It is <em>always used with a mutex</em>. <code>cond_wait</code> atomically unlocks the mutex and sleeps — preventing the race between checking and sleeping.</p>
+<div class="code-block">pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mtx  = PTHREAD_MUTEX_INITIALIZER;
+int ready = 0;
+
+// Waiter thread:
+pthread_mutex_lock(&amp;mtx);
+while (!ready)                     // ALWAYS while, never if!
+    pthread_cond_wait(&amp;cond, &amp;mtx); // atomically unlock+sleep
+// condition is now true, mutex is re-held
+pthread_mutex_unlock(&amp;mtx);
+
+// Signaler thread:
+pthread_mutex_lock(&amp;mtx);
+ready = 1;
+pthread_cond_signal(&amp;cond);     // wake ONE waiter
+// pthread_cond_broadcast(&amp;cond); // wake ALL waiters
+pthread_mutex_unlock(&amp;mtx);</div>
+<div class="tip-box">⚠️ <strong>Why while and not if?</strong> Spurious wakeups — a thread can wake from cond_wait even when no one signaled it (POSIX allows this). The while loop re-checks the condition and goes back to sleep if it's still false. This is mandatory.</div>`,
     practice:[
       {q:"sem_wait() blocks when the semaphore value is:",opts:["Positive","Negative","Zero","Greater than 1"],ans:2,exp:"sem_wait blocks if the value is 0 and decrements it atomically once > 0."},
       {q:"Why use while() instead of if() with cond_wait?",opts:["Compiler requirement","Handle spurious wakeups","Performance","Mutex must be re-acquired manually"],ans:1,exp:"Spurious wakeups can occur — the while loop re-checks the condition after every wakeup."},
@@ -292,19 +492,56 @@ pthread_mutex_unlock(&amp;m);</div>
   {
     id:'l3_1', title:'File I/O System Calls',
     learn:`<h3>File Descriptors</h3>
-<p>Everything is a file in Unix. A file descriptor (fd) is a small non-negative integer: 0=stdin, 1=stdout, 2=stderr.</p>
-<div class="code-block">int fd = open("file.txt", O_RDONLY);
-ssize_t n = read(fd, buf, sizeof(buf)); // 0=EOF
-write(fd, buf, n);
-lseek(fd, 0, SEEK_SET);  // seek to start
+<p>"Everything is a file" in Unix — files, pipes, sockets, terminals, and devices are all accessed through <strong>file descriptors (fds)</strong>: small non-negative integers. Every process starts with three open: 0 = stdin, 1 = stdout, 2 = stderr.</p>
+<h3>The Core System Calls</h3>
+<div class="code-block">// Open
+int fd = open("file.txt", O_RDWR|O_CREAT|O_TRUNC, 0644);
+if (fd == -1) { perror("open"); exit(1); }
+
+// Read — may return fewer bytes than requested!
+char buf[1024];
+ssize_t n;
+while ((n = read(fd, buf, sizeof(buf))) &gt; 0) {
+    // process n bytes
+}
+if (n == -1) { perror("read"); }  // n==0 means EOF
+
+// Write — may also be partial!
+ssize_t written = write(fd, buf, n);
+if (written != n) { perror("write"); }
+
+// Seek
+lseek(fd, 0,    SEEK_SET);  // go to start
+lseek(fd, 0,    SEEK_END);  // go to EOF
+lseek(fd, -10,  SEEK_CUR);  // go back 10 bytes
+
+// Close — always close! leaking fds causes resource exhaustion
 close(fd);</div>
 <h3>Open Flags</h3>
 <ul>
-<li><code>O_RDONLY</code>, <code>O_WRONLY</code>, <code>O_RDWR</code></li>
-<li><code>O_CREAT | O_TRUNC</code> — create/truncate</li>
-<li><code>O_APPEND</code> — always write at end</li>
+<li><code>O_RDONLY</code>, <code>O_WRONLY</code>, <code>O_RDWR</code> — access mode (required)</li>
+<li><code>O_CREAT</code> — create if doesn't exist (needs mode argument, e.g. 0644)</li>
+<li><code>O_TRUNC</code> — truncate existing file to zero length</li>
+<li><code>O_APPEND</code> — all writes go to end atomically (safe for concurrent writers)</li>
+<li><code>O_NONBLOCK</code> — don't block on open or I/O (useful for pipes/FIFOs)</li>
 </ul>
-<div class="tip-box">💡 read() may return fewer bytes than requested — always loop for complete I/O!</div>`,
+<h3>Buffered stdio vs Raw Syscalls</h3>
+<p><code>stdio</code> (printf, fread, fgets) adds a userspace buffer that batches syscalls. Raw syscalls (read, write) go straight to the kernel. Use stdio for text files, syscalls for binary/network/pipes.</p>
+<div class="code-block">// stdio — buffered, easier API
+FILE *f = fopen("data.txt", "r");
+char line[256];
+while (fgets(line, sizeof(line), f))
+    printf("%s", line);
+fclose(f);
+
+// int fd = fileno(f);  // get the underlying fd from FILE*</div>
+<h3>File Descriptor Duplication</h3>
+<div class="code-block">// dup2(oldfd, newfd): make newfd point to same file as oldfd
+// Classic: redirect stdout to a file
+int logfd = open("out.log", O_WRONLY|O_CREAT|O_TRUNC, 0644);
+dup2(logfd, STDOUT_FILENO);  // stdout now writes to out.log
+close(logfd);</div>
+<div class="tip-box">⚠️ <strong>Always check return values!</strong> read() returns 0 on EOF, -1 on error, and may return fewer bytes than requested on pipes/sockets. Use a loop for complete I/O.</div>`,
     practice:[
       {q:"open() returns what on success?",opts:["The file size","A file pointer (FILE*)","A file descriptor (int)","0"],ans:2,exp:"open() returns a non-negative integer (file descriptor) on success, or -1 on error."},
       {q:"What does read() return at EOF?",opts:["-1","EOF constant","0","Buffer size"],ans:2,exp:"read() returns 0 at end-of-file, positive for bytes read, and -1 on error."},
@@ -320,19 +557,53 @@ close(fd);</div>
   },
   {
     id:'l3_2', title:'Inodes & File Systems',
-    learn:`<h3>Inodes</h3>
-<p>An <strong>inode</strong> stores all file metadata <em>except the filename</em>: type, permissions, size, timestamps, link count, and pointers to data blocks.</p>
+    learn:`<h3>Filesystem Structure</h3>
+<p>A Unix filesystem has three layers: <strong>directories</strong> (name → inode mappings), <strong>inodes</strong> (file metadata), and <strong>data blocks</strong> (file contents). The filename only lives in the directory entry.</p>
+<h3>Inodes</h3>
+<p>An <strong>inode</strong> stores everything about a file <em>except its name</em>: file type, permissions (mode), owner (uid/gid), size, timestamps (atime/mtime/ctime), hard link count, and pointers to data blocks.</p>
 <div class="code-block">struct stat st;
-stat("file.txt", &amp;st);
-printf("inode: %lu\\n", st.st_ino);
-printf("size:  %ld\\n", st.st_size);
-printf("links: %lu\\n", st.st_nlink);</div>
+stat("file.txt", &amp;st);    // follows symlinks
+lstat("link.txt", &amp;st);   // stats the link itself
+fstat(fd, &amp;st);            // stats an open file descriptor
+
+printf("inode:   %lu\\n",  st.st_ino);
+printf("size:    %ld\\n",  st.st_size);
+printf("links:   %lu\\n",  st.st_nlink);
+printf("mode:    %o\\n",   st.st_mode);  // octal permissions
+printf("uid:     %d\\n",   st.st_uid);
+printf("blocks:  %ld\\n",  st.st_blocks); // 512-byte blocks</div>
+<h3>Permission Bits</h3>
+<div class="code-block">// Mode: type (4 bits) + setuid/setgid/sticky (3 bits) + rwxrwxrwx (9 bits)
+// 0644 = rw-r--r-- (owner rw, group r, others r)
+// 0755 = rwxr-xr-x (owner rwx, group rx, others rx)
+
+// Check type
+S_ISREG(st.st_mode)   // regular file
+S_ISDIR(st.st_mode)   // directory
+S_ISLNK(st.st_mode)   // symlink (use lstat!)
+S_ISFIFO(st.st_mode)  // named pipe</div>
 <h3>Hard Links vs Symlinks</h3>
 <ul>
-<li><strong>Hard link:</strong> another directory entry pointing to the SAME inode</li>
-<li><strong>Symlink:</strong> a special file containing a path string — can dangle</li>
+<li><strong>Hard link:</strong> <code>link(old, new)</code> — creates a new directory entry pointing to the <em>same inode</em>. Same data, same permissions. Cannot cross filesystems. File deleted only when link count → 0 AND all fds closed.</li>
+<li><strong>Symbolic link:</strong> <code>symlink(target, path)</code> — a special file containing a path string. Can cross filesystems. Can <em>dangle</em> if the target is deleted.</li>
 </ul>
-<div class="tip-box">💡 Run <code>ls -li</code> to see inode numbers. Same number = same inode = hard links.</div>`,
+<div class="code-block">// Hard link
+link("original.txt", "hardlink.txt");
+// Both now have st_nlink == 2, same inode number
+unlink("original.txt"); // decrements link count → 1; data survives
+
+// Symlink
+symlink("/etc/hostname", "mylink");
+readlink("mylink", buf, sizeof(buf)); // reads the target path
+unlink("mylink");  // removes the symlink, not the target</div>
+<h3>Directories</h3>
+<p>A directory is a special file: a table mapping filenames to inode numbers. <code>.</code> is the directory itself, <code>..</code> is the parent. Each has at least link count 2 (itself + its own <code>.</code> entry).</p>
+<div class="code-block">DIR *dir = opendir(".");
+struct dirent *entry;
+while ((entry = readdir(dir)) != NULL)
+    printf("%s\\n", entry-&gt;d_name);
+closedir(dir);</div>
+<div class="tip-box">💡 <strong>Key fact:</strong> <code>ls -li</code> shows inode numbers in the first column. Two names with the same inode number are hard links to the same file. Data is freed only when link count reaches 0 AND all open file descriptors are closed.</div>`,
     practice:[
       {q:"What does an inode NOT store?",opts:["File size","Permissions","The filename","Timestamps"],ans:2,exp:"Inodes store metadata but NOT the filename. Filenames live in directory entries mapping names to inode numbers."},
       {q:"Two hard links to the same file will have:",opts:["Different inode numbers","The same inode number","Different sizes","Different permissions"],ans:1,exp:"Hard links point to the same inode, so they share the same inode number, size, and permissions."},
@@ -354,15 +625,54 @@ printf("links: %lu\\n", st.st_nlink);</div>
   lessons:[
   {
     id:'l4_1', title:'Sockets & Server Flow',
-    learn:`<h3>Socket Basics</h3>
-<p>A socket is a file descriptor for two-way communication. The classic server sequence: socket → bind → listen → accept → read/write → close.</p>
+    learn:`<h3>What is a Socket?</h3>
+<p>A socket is a file descriptor for bidirectional network communication. It abstracts TCP/IP into a simple read/write interface. <code>AF_INET</code> = IPv4, <code>SOCK_STREAM</code> = TCP (reliable, ordered), <code>SOCK_DGRAM</code> = UDP (connectionless).</p>
+<h3>Server-Side Flow (TCP)</h3>
 <div class="code-block">int sfd = socket(AF_INET, SOCK_STREAM, 0);
+
+// Allow port reuse after crash (highly recommended!)
+int opt = 1;
+setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &amp;opt, sizeof(opt));
+
+struct sockaddr_in addr = {0};
+addr.sin_family      = AF_INET;
+addr.sin_port        = htons(8080);
+addr.sin_addr.s_addr = INADDR_ANY;  // all interfaces
+
 bind(sfd, (struct sockaddr*)&amp;addr, sizeof(addr));
-listen(sfd, 5);
-int cfd = accept(sfd, NULL, NULL); // blocks; new fd!
+listen(sfd, 10);  // backlog: max queued connections
+
+// Accept loop
+while (1) {
+    struct sockaddr_in client;
+    socklen_t clen = sizeof(client);
+    int cfd = accept(sfd, (struct sockaddr*)&amp;client, &amp;clen);
+    // cfd is a NEW fd just for this client
+    // inet_ntoa(client.sin_addr) gives client IP
+    char buf[1024];
+    ssize_t n = read(cfd, buf, sizeof(buf));
+    write(cfd, buf, n);  // echo back
+    close(cfd);
+}</div>
+<h3>Client-Side Flow (TCP)</h3>
+<div class="code-block">int cfd = socket(AF_INET, SOCK_STREAM, 0);
+struct sockaddr_in srv = {0};
+srv.sin_family = AF_INET;
+srv.sin_port   = htons(8080);
+inet_pton(AF_INET, "127.0.0.1", &amp;srv.sin_addr);
+
+connect(cfd, (struct sockaddr*)&amp;srv, sizeof(srv));
 write(cfd, "Hello!", 6);
-close(cfd); close(sfd);</div>
-<div class="tip-box">💡 accept() returns a NEW socket fd for the client. The original listening socket stays open for more connections.</div>`,
+char buf[64];
+read(cfd, buf, sizeof(buf));
+close(cfd);</div>
+<h3>Socket Types Summary</h3>
+<ul>
+<li><code>AF_INET + SOCK_STREAM</code> — TCP/IPv4: reliable, ordered, connection-based</li>
+<li><code>AF_INET + SOCK_DGRAM</code> — UDP/IPv4: fast, no guarantees, no connection</li>
+<li><code>AF_UNIX</code> — Unix domain: local IPC only, faster than TCP loopback</li>
+</ul>
+<div class="tip-box">💡 <strong>Key insight:</strong> accept() creates a NEW socket fd for each client — the original listening socket stays open to accept more connections. Always setsockopt SO_REUSEADDR on server sockets to avoid "Address already in use" errors during development.</div>`,
     practice:[
       {q:"What does accept() return?",opts:["The listening fd","A new fd for the client","The client's IP","Number of connections"],ans:1,exp:"accept() returns a NEW socket file descriptor specifically for communicating with the connected client."},
       {q:"SOCK_STREAM provides:",opts:["Datagrams","Reliable, ordered, connection-based communication","Broadcast","Raw packets"],ans:1,exp:"SOCK_STREAM is TCP-like: reliable, ordered, with error correction."},
@@ -378,19 +688,56 @@ close(cfd); close(sfd);</div>
   },
   {
     id:'l4_2', title:'AF_INET & Multiple Clients',
-    learn:`<h3>IPv4 Socket Setup</h3>
-<div class="code-block">struct sockaddr_in addr;
-memset(&amp;addr, 0, sizeof(addr));
-addr.sin_family = AF_INET;
-addr.sin_port   = htons(8080);    // host→network byte order
-addr.sin_addr.s_addr = INADDR_ANY;</div>
-<h3>Handling Multiple Clients</h3>
-<p><strong>fork-per-client:</strong> after accept(), fork a child to handle the client. Parent keeps listening.</p>
-<p><strong>select():</strong> monitor multiple fds simultaneously in one thread.</p>
-<div class="code-block">fd_set readfds = master_fds;  // copy! select modifies it
-int ready = select(max_fd+1, &amp;readfds, NULL, NULL, NULL);
-if (FD_ISSET(listen_fd, &amp;readfds)) accept(...)</div>
-<div class="tip-box">⚠️ Always copy master_fds before select() — it modifies the set in place!</div>`,
+    learn:`<h3>Byte Order — htons/htonl</h3>
+<p>Network protocol uses <strong>big-endian</strong> byte order. Intel CPUs are little-endian. Always convert:</p>
+<ul>
+<li><code>htons(port)</code> — host to network short (16-bit port number)</li>
+<li><code>htonl(addr)</code> — host to network long (32-bit IP address)</li>
+<li><code>ntohs/ntohl</code> — reverse (network to host)</li>
+<li><code>inet_pton(AF_INET, "1.2.3.4", &amp;addr)</code> — string IP to binary</li>
+<li><code>inet_ntop(AF_INET, &amp;addr, buf, len)</code> — binary to string IP</li>
+</ul>
+<h3>Strategy 1: fork-per-client</h3>
+<p>After accept(), fork a child to handle the client. Parent immediately loops back to accept more. Classic, simple, isolated — but costly for many clients.</p>
+<div class="code-block">while (1) {
+    int cfd = accept(sfd, NULL, NULL);
+    pid_t pid = fork();
+    if (pid == 0) {
+        close(sfd);         // child doesn't need listening fd
+        handle_client(cfd); // do the work
+        close(cfd);
+        exit(0);
+    }
+    close(cfd);             // parent doesn't need this client fd
+    // parent loops to accept next connection
+}</div>
+<h3>Strategy 2: select() — I/O Multiplexing</h3>
+<p>One thread monitors multiple fds. When any becomes readable, handle it. No fork overhead.</p>
+<div class="code-block">fd_set master_fds, readfds;
+FD_ZERO(&amp;master_fds);
+FD_SET(sfd, &amp;master_fds);  // watch the listening socket
+int max_fd = sfd;
+
+while (1) {
+    readfds = master_fds;    // COPY — select() modifies it
+    select(max_fd + 1, &amp;readfds, NULL, NULL, NULL);
+
+    if (FD_ISSET(sfd, &amp;readfds)) {   // new connection
+        int cfd = accept(sfd, NULL, NULL);
+        FD_SET(cfd, &amp;master_fds);
+        if (cfd &gt; max_fd) max_fd = cfd;
+    }
+    // check each client fd...
+    for (int fd = 3; fd &lt;= max_fd; fd++) {
+        if (fd != sfd &amp;&amp; FD_ISSET(fd, &amp;readfds)) {
+            char buf[1024];
+            int n = read(fd, buf, sizeof(buf));
+            if (n &lt;= 0) { close(fd); FD_CLR(fd, &amp;master_fds); }
+            else write(fd, buf, n);
+        }
+    }
+}</div>
+<div class="tip-box">⚠️ <strong>select() limits:</strong> Can only monitor up to FD_SETSIZE (1024) fds. For large-scale servers use poll() (no limit) or epoll (Linux, O(1) scaling). The fd_set must be re-copied every iteration because select() destroys it.</div>`,
     practice:[
       {q:"htons() converts:",opts:["Host-to-network short (16-bit port)","Network-to-host short","Host-to-network long","Decimal to hex"],ans:0,exp:"htons converts a 16-bit value from host byte order to network byte order (big-endian)."},
       {q:"Why copy master_fds before select()?",opts:["select() doesn't work otherwise","select() modifies the fd_set, clearing unready fds","Stack overflow","Compiler requirement"],ans:1,exp:"select() MODIFIES the fd_set — it clears bits for fds that aren't ready. Keep master_fds as the full watch list."},
@@ -413,21 +760,56 @@ if (FD_ISSET(listen_fd, &amp;readfds)) accept(...)</div>
   {
     id:'l5_1', title:'Pipes & FIFOs',
     learn:`<h3>Anonymous Pipes</h3>
-<p>pipe() creates a one-way channel: fd[0]=read end, fd[1]=write end.</p>
+<p>A pipe is a unidirectional kernel buffer. <code>pipe(fd)</code> creates two ends: <code>fd[0]</code> = read end, <code>fd[1]</code> = write end. Data flows in one direction: write to fd[1], read from fd[0].</p>
 <div class="code-block">int fd[2];
-pipe(fd);
+pipe(fd);  // create pipe BEFORE fork so both ends exist in parent+child
+
 if (fork() == 0) {
-    close(fd[1]);       // child reads
-    read(fd[0], buf, N);
+    // --- CHILD reads ---
+    close(fd[1]);            // close write end — not needed
+    char buf[64];
+    int n = read(fd[0], buf, sizeof(buf));  // blocks until data
+    buf[n] = '\\0';
+    printf("Child got: %s\\n", buf);
+    close(fd[0]);
+    exit(0);
 } else {
-    close(fd[0]);       // parent writes
+    // --- PARENT writes ---
+    close(fd[0]);            // close read end — not needed
     write(fd[1], "Hello!", 6);
-    close(fd[1]);
+    close(fd[1]);            // CRITICAL: signals EOF to child
     wait(NULL);
 }</div>
-<div class="tip-box">⚠️ MUST close unused ends! If parent keeps fd[0] open, child's read() never gets EOF.</div>
+<h3>Why You MUST Close Unused Ends</h3>
+<p>A pipe has EOF only when <strong>all write ends are closed</strong>. If the parent keeps fd[0] open (or child keeps fd[1] open), read() will block forever waiting for more data that will never arrive.</p>
+<div class="code-block">// Shell pipeline: ls | grep txt
+// The shell does:
+int fd[2];
+pipe(fd);
+if (fork() == 0) {         // child runs grep
+    dup2(fd[0], STDIN_FILENO);  // stdin = pipe read end
+    close(fd[0]); close(fd[1]);
+    execlp("grep", "grep", "txt", NULL);
+} else {                   // parent runs ls
+    dup2(fd[1], STDOUT_FILENO); // stdout = pipe write end
+    close(fd[0]); close(fd[1]);
+    execlp("ls", "ls", NULL);
+}</div>
 <h3>Named Pipes (FIFOs)</h3>
-<p><code>mkfifo("/tmp/my.fifo", 0666)</code> — works between unrelated processes.</p>`,
+<p>FIFOs have a filesystem path so <em>unrelated</em> processes can open them without fork. They block on open until both ends are connected.</p>
+<div class="code-block">// Process A (writer):
+mkfifo("/tmp/my.fifo", 0666);
+int fd = open("/tmp/my.fifo", O_WRONLY);  // blocks until reader opens
+write(fd, "data", 4);
+close(fd);
+
+// Process B (reader) — in a different program:
+int fd = open("/tmp/my.fifo", O_RDONLY);  // blocks until writer opens
+char buf[64];
+read(fd, buf, sizeof(buf));
+close(fd);
+unlink("/tmp/my.fifo");  // clean up</div>
+<div class="tip-box">💡 <strong>Pipe capacity:</strong> On Linux, the pipe buffer is 64 KB. Writes ≤ PIPE_BUF (4 KB) are atomic. write() blocks when the buffer is full; read() blocks when it's empty.</div>`,
     practice:[
       {q:"After pipe(fd), fd[0] is used for:",opts:["Writing","Reading","Both","Closing"],ans:1,exp:"fd[0] is the read end, fd[1] is the write end. Data flows fd[1] → pipe → fd[0]."},
       {q:"Why close unused pipe ends?",opts:["To save fds","So read() gets EOF when all writers close","Security requirement","Performance"],ans:1,exp:"If parent keeps fd[0] open, the pipe still has a reader after parent closes fd[1], preventing child from seeing EOF."},
@@ -443,20 +825,79 @@ if (fork() == 0) {
   },
   {
     id:'l5_2', title:'Shared Memory',
-    learn:`<h3>POSIX Shared Memory</h3>
-<p>The fastest IPC — same physical memory mapped into multiple processes' address spaces. No kernel copy overhead.</p>
-<div class="code-block">// 1. Create/open
-int fd = shm_open("/myshm", O_CREAT|O_RDWR, 0644);
-// 2. Set size
-ftruncate(fd, sizeof(MyData));
-// 3. Map
-MyData *p = mmap(NULL, sizeof(MyData),
-    PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    learn:`<h3>Why Shared Memory?</h3>
+<p>All other IPC (pipes, sockets, message queues) copy data through the kernel. Shared memory maps the <em>same physical pages</em> into multiple processes' address spaces — communicating is just a pointer read/write, no copies at all. This makes it the fastest IPC for large data.</p>
+<h3>POSIX Shared Memory: 5-Step Pattern</h3>
+<div class="code-block">#include &lt;sys/mman.h&gt;    // mmap, munmap, shm_open, shm_unlink
+#include &lt;fcntl.h&gt;       // O_CREAT, O_RDWR
+#include &lt;sys/stat.h&gt;    // mode_t
+#include &lt;unistd.h&gt;      // ftruncate, close
+
+typedef struct { int counter; char message[64]; } SharedData;
+
+// === PROCESS A: Creator ===
+// Step 1: create/open the named object
+int fd = shm_open("/myshm", O_CREAT | O_RDWR, 0644);
+if (fd == -1) { perror("shm_open"); exit(1); }
+
+// Step 2: set its size (must do this before mapping)
+ftruncate(fd, sizeof(SharedData));
+
+// Step 3: map it into this process's address space
+SharedData *shm = mmap(NULL, sizeof(SharedData),
+    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+close(fd);  // fd no longer needed after mmap
+
+// Step 4: use it — Process B sees these writes immediately
+shm->counter = 42;
+strcpy(shm->message, "hello from A");
+
+// Step 5: cleanup
+munmap(shm, sizeof(SharedData));
+shm_unlink("/myshm");  // remove name from filesystem</div>
+<div class="code-block">// === PROCESS B: Consumer (runs simultaneously) ===
+int fd = shm_open("/myshm", O_RDWR, 0644);  // no O_CREAT — A made it
+SharedData *shm = mmap(NULL, sizeof(SharedData),
+    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 close(fd);
-p->value = 42; // other processes see this!
-munmap(p, sizeof(MyData));
-shm_unlink("/myshm"); // remove name</div>
-<div class="tip-box">⚠️ Always synchronize! Use mutex (PTHREAD_PROCESS_SHARED) or named semaphore. Link with <code>-lrt</code>.</div>`,
+
+printf("counter=%d msg=%s\\n", shm->counter, shm->message);
+
+munmap(shm, sizeof(SharedData));
+// Don't unlink — only the last user should call shm_unlink</div>
+<h3>MAP_SHARED vs MAP_PRIVATE</h3>
+<p><strong>MAP_SHARED</strong>: writes are visible to all processes mapping the same region, and are written through to the underlying object. This is what you want for IPC.</p>
+<p><strong>MAP_PRIVATE</strong>: creates a copy-on-write mapping. Writes are private to this process and not written back. Use it for read-only access to a file when you don't want to accidentally modify it.</p>
+<h3>Synchronization is Mandatory</h3>
+<p>Shared memory has <em>no built-in synchronization</em>. Without it you get race conditions and data corruption.</p>
+<div class="code-block">// POSIX mutex in shared memory — must use PTHREAD_PROCESS_SHARED
+pthread_mutex_t *mtx = &shm->mutex;
+pthread_mutexattr_t attr;
+pthread_mutexattr_init(&attr);
+pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+pthread_mutex_init(mtx, &attr);  // initialized by creator only
+pthread_mutexattr_destroy(&attr);
+
+// Both processes use it the same way:
+pthread_mutex_lock(mtx);
+shm->counter++;  // critical section
+pthread_mutex_unlock(mtx);</div>
+<h3>Anonymous Shared Memory with fork()</h3>
+<p>When you just need parent+child to share memory (not arbitrary processes), use <code>MAP_ANONYMOUS | MAP_SHARED</code> <em>before</em> fork — no name needed, no <code>shm_open</code>.</p>
+<div class="code-block">int *shared = mmap(NULL, sizeof(int),
+    PROT_READ | PROT_WRITE,
+    MAP_SHARED | MAP_ANONYMOUS,
+    -1, 0);           // fd = -1 for anonymous
+
+*shared = 0;
+if (fork() == 0) {
+    (*shared)++;      // child increments
+    exit(0);
+}
+wait(NULL);
+printf("value = %d\\n", *shared);  // prints 1
+munmap(shared, sizeof(int));</div>
+<div class="tip-box">💡 <strong>Compile flag:</strong> On Linux, link with <code>-lrt</code> for POSIX shared memory (<code>shm_open</code>, <code>shm_unlink</code>). On macOS, no extra flag is needed. <code>mmap</code> itself is in libc.</div>`,
     practice:[
       {q:"First step to create POSIX shared memory?",opts:["mmap()","ftruncate()","shm_open()","malloc()"],ans:2,exp:"shm_open() creates/opens the named shared memory object and returns a file descriptor."},
       {q:"Why is shared memory fastest IPC?",opts:["Uses the network","Processes access the same physical memory without kernel copies","OS pre-caches it","No fds needed"],ans:1,exp:"Processes map the same physical pages — communicating is just reading/writing memory, no kernel copies."},

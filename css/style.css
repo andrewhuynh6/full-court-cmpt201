@@ -493,4 +493,7 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
   .team-row .card .card-ovr { font-size: 24px; }
   .team-row .card .card-name { font-size: 10px; }
   .profile-info .name { font-size: 20px; }
+  .learn-content { max-width: 100%; }
+  .code-block { font-size: 11px; padding: 10px 12px; }
+  .learn-content h3 { font-size: 18px; }
 }
