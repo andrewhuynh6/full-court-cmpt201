@@ -199,6 +199,7 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
 
 /* ── DASHBOARD ───────────────────────────────────────────────── */
 
+.db-wrap { padding: 24px; }
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -207,6 +208,7 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
 }
 .db-span2 { grid-column: span 2; }
 .db-span3 { grid-column: span 3; }
+.ch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 
 /* Profile card */
 .profile-panel { display: flex; align-items: center; gap: 20px; }
@@ -448,8 +450,15 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
   .topbar { padding: 10px 14px; position: sticky; top: 0; }
 
   /* ── DASHBOARD ── */
+  .db-wrap { padding: 0; }
   .dashboard-grid { grid-template-columns: 1fr; gap: 10px; }
   .db-span2, .db-span3 { grid-column: span 1; }
+  .panel { padding: 14px; }
+  .panel-title { font-size: 16px; margin-bottom: 10px; }
+  .ovr-badge { font-size: 40px; }
+  /* Chapter rows: keep single line, shrink button */
+  .ch-row { gap: 8px; }
+  .ch-row .btn { padding: 4px 10px; font-size: 11px; flex-shrink: 0; }
 
   /* Profile card: stack rank/xp, then stats full width */
   .profile-panel { flex-wrap: wrap; gap: 10px; }

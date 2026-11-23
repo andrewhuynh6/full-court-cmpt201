@@ -37,7 +37,7 @@ const NBA_PLAYERS = [
   // ── Silver ───────────────────────────────────────────────────────
   { id:'p_butler',   nbaId:202710,  name:'Jimmy Butler',              pos:'SF', ovr:81, rarity:'Silver',  pts:19, reb:5,  ast:5,  num:22, team:'GSW' },
   { id:'p_dafox',    nbaId:1628368, name:"De'Aaron Fox",              pos:'PG', ovr:80, rarity:'Silver',  pts:24, reb:4,  ast:6,  num:5,  team:'SAC' },
-  { id:'p_herro',    nbaId:1629638, name:'Tyler Herro',               pos:'SG', ovr:79, rarity:'Silver',  pts:22, reb:4,  ast:5,  num:14, team:'MIA' },
+  { id:'p_herro',    nbaId:1629639, name:'Tyler Herro',               pos:'SG', ovr:79, rarity:'Silver',  pts:22, reb:4,  ast:5,  num:14, team:'MIL' },
   { id:'p_anunoby',  nbaId:1628384, name:'OG Anunoby',                pos:'SF', ovr:79, rarity:'Silver',  pts:15, reb:5,  ast:2,  num:8,  team:'NYK' },
   { id:'p_barnes',   nbaId:1630567, name:'Scottie Barnes',            pos:'PF', ovr:79, rarity:'Silver',  pts:19, reb:7,  ast:5,  num:4,  team:'TOR' },
   { id:'p_franz',    nbaId:1630532, name:'Franz Wagner',              pos:'SF', ovr:79, rarity:'Silver',  pts:24, reb:5,  ast:4,  num:21, team:'ORL' },
@@ -48,13 +48,13 @@ const NBA_PLAYERS = [
   { id:'p_mturner',  nbaId:1626167, name:'Myles Turner',              pos:'C',  ovr:75, rarity:'Silver',  pts:14, reb:7,  ast:1,  num:33, team:'IND' },
   { id:'p_sochan',   nbaId:1631109, name:'Jeremy Sochan',             pos:'PF', ovr:73, rarity:'Silver',  pts:14, reb:6,  ast:4,  num:10, team:'SAS' },
   { id:'p_ivey',     nbaId:1631093, name:'Jaden Ivey',                pos:'PG', ovr:72, rarity:'Silver',  pts:15, reb:4,  ast:5,  num:23, team:'DET' },
-  { id:'p_smith',    nbaId:1631105, name:'Jabari Smith Jr.',          pos:'PF', ovr:71, rarity:'Silver',  pts:14, reb:7,  ast:2,  num:1,  team:'HOU' },
+  { id:'p_smith',    nbaId:1631095, name:'Jabari Smith Jr.',          pos:'PF', ovr:71, rarity:'Silver',  pts:14, reb:7,  ast:2,  num:1,  team:'HOU' },
   // ── Bronze ───────────────────────────────────────────────────────
   { id:'p_brogdon',  nbaId:1627763, name:'Malcolm Brogdon',           pos:'PG', ovr:68, rarity:'Bronze',  pts:12, reb:3,  ast:4,  num:7,  team:'POR' },
   { id:'p_dosunmu',  nbaId:1630558, name:'Ayo Dosunmu',               pos:'SG', ovr:67, rarity:'Bronze',  pts:12, reb:3,  ast:4,  num:11, team:'CHI' },
-  { id:'p_vucevic',  nbaId:203085,  name:'Nikola Vucevic',            pos:'C',  ovr:66, rarity:'Bronze',  pts:14, reb:10, ast:3,  num:9,  team:'CHI' },
+  { id:'p_vucevic',  nbaId:202696,  name:'Nikola Vucevic',            pos:'C',  ovr:66, rarity:'Bronze',  pts:14, reb:10, ast:3,  num:9,  team:'CHI' },
   { id:'p_okoro',    nbaId:1630171, name:'Isaac Okoro',               pos:'SG', ovr:66, rarity:'Bronze',  pts:9,  reb:3,  ast:2,  num:35, team:'CLE' },
-  { id:'p_walker',   nbaId:1629611, name:'Nickeil Alexander-Walker',  pos:'SF', ovr:63, rarity:'Bronze',  pts:9,  reb:2,  ast:3,  num:0,  team:'MIN' },
+  { id:'p_walker',   nbaId:1629638, name:'Nickeil Alexander-Walker',  pos:'SF', ovr:63, rarity:'Bronze',  pts:9,  reb:2,  ast:3,  num:7,  team:'ATL' },
   { id:'p_thad',     nbaId:201152,  name:'Thaddeus Young',            pos:'PF', ovr:62, rarity:'Bronze',  pts:7,  reb:4,  ast:2,  num:21, team:'SAS' },
 ];
 

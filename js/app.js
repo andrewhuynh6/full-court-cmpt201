@@ -161,11 +161,11 @@ function renderDashboard() {
           : ''}
       </div>
     </div>
-    <div style="padding:24px">
+    <div class="db-wrap">
       <div class="dashboard-grid">
 
         <!-- Profile -->
-        <div class="panel" style="grid-column:span 2">
+        <div class="panel db-span2">
           <div class="profile-panel">
             <div class="profile-info" style="flex:1;min-width:0">
               <div class="level">LVL ${p.level} · SEASON 01</div>
@@ -209,7 +209,7 @@ function renderDashboard() {
         </div>
 
         <!-- Training Progress -->
-        <div class="panel" style="grid-column:span 2">
+        <div class="panel db-span2">
           <div class="panel-title">Training Progress</div>
           <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px">
             <div class="stat-pill"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>
@@ -222,9 +222,9 @@ function renderDashboard() {
             const done = isChapterComplete(AppState, ch);
             const doneLs = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
             const p = Math.round(doneLs/ch.lessons.length*100);
-            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            return `<div class="ch-row">
               <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${done?'var(--ok)':'var(--dim)'};min-width:28px">${ch.num}</div>
-              <div style="flex:1">
+              <div style="flex:1;min-width:0">
                 <div style="font-size:12px;color:var(--text);margin-bottom:3px">${ch.title}</div>
                 <div class="progress-bar" style="height:5px"><div class="progress-fill" style="width:${p}%"></div></div>
               </div>
