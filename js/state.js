@@ -9,7 +9,7 @@ const DEFAULT_STATE = {
     level: 1,
     xp: 0,
     xpToNext: 200,
-    rank: 'Undrafted',
+    rank: 'Rookie',
     season: 'SEASON 01',
   },
   team: null,          // set on first load
@@ -66,13 +66,16 @@ function resetState() {
 
 // XP & Leveling
 const LEVELS = [
-  { level:1,  min:0,    max:200,  rank:'Undrafted' },
-  { level:2,  min:200,  max:500,  rank:'G-League' },
-  { level:3,  min:500,  max:1000, rank:'Rookie' },
-  { level:4,  min:1000, max:2000, rank:'Starter' },
-  { level:5,  min:2000, max:4000, rank:'All-Star' },
-  { level:6,  min:4000, max:8000, rank:'MVP Candidate' },
-  { level:7,  min:8000, max:Infinity, rank:'Champion' },
+  { level:1,  min:0,     max:150,     rank:'Rookie' },
+  { level:2,  min:150,   max:400,     rank:'Bench Player' },
+  { level:3,  min:400,   max:800,     rank:'Rotation Player' },
+  { level:4,  min:800,   max:1500,    rank:'Starter' },
+  { level:5,  min:1500,  max:2500,    rank:'Sixth Man' },
+  { level:6,  min:2500,  max:4000,    rank:'All-Star' },
+  { level:7,  min:4000,  max:6000,    rank:'Superstar' },
+  { level:8,  min:6000,  max:9000,    rank:'MVP' },
+  { level:9,  min:9000,  max:14000,   rank:'Hall of Fame' },
+  { level:10, min:14000, max:Infinity, rank:'GOAT' },
 ];
 
 function addXP(state, amount) {

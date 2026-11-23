@@ -7,12 +7,12 @@ let AppState;
 
 function initApp() {
   AppState = loadState();
-  // Generate starter team on first load
   if (!AppState.team) {
     AppState.team = genStarterTeam();
     saveState(AppState);
   }
   buildLayout();
+  applyTheme();
   navigate('dashboard');
   updateSidebar();
   updatePackBadge();
@@ -25,30 +25,31 @@ function buildLayout() {
     <aside class="sidebar">
       <div class="sidebar-logo">
         <div class="logo-icon">🏀</div>
-        <div>
+        <div class="logo-words">
           <div class="logo-text">FULL COURT</div>
           <div class="logo-sub">CMPT 201</div>
         </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">☀</button>
       </div>
       <nav class="sidebar-nav">
         <div class="nav-section-label">ARENA</div>
-        ${navItem('dashboard','🏠','Home','dashboard')}
+        ${navItem('dashboard','Home','dashboard')}
         <div class="nav-section-label">TRAINING</div>
-        ${navItem('learn','📖','Learn','learn')}
-        ${navItem('gameday','🏀','Game Day','gameday')}
+        ${navItem('learn','Learn','learn')}
+        ${navItem('gameday','Game Day','gameday')}
         <div class="nav-section-label">ROSTER</div>
-        ${navItem('team','👥','My Team','team')}
-        ${navItem('collection','🃏','Collection','collection')}
-        <div class="nav-item" onclick="openPacksIfAny()" style="cursor:pointer">
-          <span class="nav-icon">📦</span><span>Open Packs</span>
+        ${navItem('team','My Team','team')}
+        ${navItem('collection','Collection','collection')}
+        <div class="nav-item" id="nav-packs" onclick="openPacksIfAny()" style="cursor:pointer">
+          <span>Open Packs</span>
           <span class="nav-badge" id="packBadge" style="display:none">0</span>
         </div>
         <div class="nav-section-label">SEASON</div>
-        ${navItem('season','🏆','Season Progress','season')}
+        ${navItem('season','Season Progress','season')}
       </nav>
       <div class="sidebar-footer">
         <div class="sidebar-player-name" id="sb-name">Rookie</div>
-        <div class="sidebar-rank" id="sb-rank">Undrafted</div>
+        <div class="sidebar-rank" id="sb-rank">Rookie</div>
         <div class="sidebar-xp-label" id="sb-xp">0 XP</div>
         <div class="sidebar-xp-bar"><div class="sidebar-xp-fill" id="sb-xpfill" style="width:0%"></div></div>
       </div>
@@ -64,10 +65,30 @@ function buildLayout() {
   renderDashboard();
 }
 
-function navItem(viewId, icon, label, action) {
+function navItem(viewId, label, action) {
   return `<div class="nav-item" id="nav-${viewId}" onclick="navigate('${action}')">
-    <span class="nav-icon">${icon}</span><span>${label}</span>
+    <span>${label}</span>
   </div>`;
+}
+
+function toggleTheme() {
+  const root = document.documentElement;
+  const isLight = root.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  root.setAttribute('data-theme', next);
+  document.getElementById('themeToggle').textContent = next === 'light' ? '🌙' : '☀';
+  try { localStorage.setItem('fc_theme', next); } catch(e) {}
+}
+
+function applyTheme() {
+  try {
+    const saved = localStorage.getItem('fc_theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = saved === 'light' ? '🌙' : '☀';
+    }
+  } catch(e) {}
 }
 
 function navigate(view) {
