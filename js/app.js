@@ -24,7 +24,6 @@ function buildLayout() {
   document.getElementById('app').innerHTML = `
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="logo-icon">🏀</div>
         <div class="logo-words">
           <div class="logo-text">FULL COURT</div>
           <div class="logo-sub">CMPT 201</div>
