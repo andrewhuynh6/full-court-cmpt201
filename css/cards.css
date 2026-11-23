@@ -1,0 +1,169 @@
+/* ── PLAYER CARDS ───────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  width: 140px;
+  min-width: 140px;
+  height: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  user-select: none;
+}
+.card:hover { transform: translateY(-4px) scale(1.03); }
+
+/* Rarity gradients */
+.card.Bronze  { background: linear-gradient(145deg, #3D2800 0%, #8B5A00 40%, #CD7F32 70%, #3D2800 100%); box-shadow: 0 0 12px rgba(205,127,50,.5); }
+.card.Silver  { background: linear-gradient(145deg, #1A1A1A 0%, #606060 40%, #C0C0C0 70%, #1A1A1A 100%); box-shadow: 0 0 12px rgba(192,192,192,.5); }
+.card.Gold    { background: linear-gradient(145deg, #3D2800 0%, #A07000 40%, #FFD700 70%, #3D2800 100%); box-shadow: 0 0 18px rgba(255,215,0,.55); }
+.card.Diamond { background: linear-gradient(145deg, #0D0030 0%, #4A0080 35%, #8B00FF 60%, #00BFFF 85%, #0D0030 100%); box-shadow: 0 0 24px rgba(139,0,255,.6), 0 0 48px rgba(0,191,255,.3); }
+
+/* Shine overlay */
+.card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 50%, rgba(255,255,255,.06) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Diamond shimmer */
+.card.Diamond::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,.04) 8px, rgba(255,255,255,.04) 9px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-inner { position: relative; height: 100%; display: flex; flex-direction: column; padding: 8px; z-index: 3; }
+
+/* OVR badge */
+.card-ovr {
+  position: absolute; top: 8px; left: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.8);
+}
+.card-pos {
+  position: absolute; top: 36px; left: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  color: rgba(255,255,255,.75);
+}
+
+/* Player silhouette */
+.card-art {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.card-art svg { width: 90px; height: 110px; opacity: .7; }
+
+/* Name footer */
+.card-footer {
+  background: rgba(0,0,0,.55);
+  margin: 0 -8px -8px;
+  padding: 5px 8px 6px;
+  backdrop-filter: blur(4px);
+}
+.card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: .5px;
+  color: #fff; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-rarity {
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: rgba(255,255,255,.55); margin-top: 1px;
+}
+.card.Gold    .card-rarity { color: #FFD700; }
+.card.Diamond .card-rarity { color: #00BFFF; }
+.card.Silver  .card-rarity { color: #C0C0C0; }
+.card.Bronze  .card-rarity { color: #CD7F32; }
+
+/* Stats row */
+.card-stats {
+  display: flex; gap: 6px; margin-top: 3px;
+}
+.card-stat { font-size: 9px; color: rgba(255,255,255,.65); }
+.card-stat span { color: #fff; font-weight: 700; }
+
+/* Large card (pack opening / collection modal) */
+.card-lg {
+  width: 220px; min-width: 220px; height: 320px;
+  border-radius: 12px;
+}
+.card-lg .card-ovr  { font-size: 46px; }
+.card-lg .card-pos  { font-size: 14px; top: 54px; left: 14px; }
+.card-lg .card-art svg { width: 150px; height: 180px; opacity: .75; }
+.card-lg .card-name { font-size: 18px; }
+.card-lg .card-rarity { font-size: 11px; }
+.card-lg .card-footer { padding: 8px 14px 10px; margin: 0 -14px -14px; }
+.card-lg .card-inner  { padding: 14px; }
+.card-lg .card-stats  { gap: 10px; margin-top: 5px; }
+.card-lg .card-stat   { font-size: 11px; }
+
+/* Team slot */
+.team-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.team-pos-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: 1px; color: var(--dim);
+}
+.team-slot .card:hover { box-shadow: 0 0 24px rgba(232,98,42,.5); }
+
+/* Pack card */
+.pack-card {
+  width: 160px; height: 220px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  transition: transform .15s, box-shadow .15s;
+  position: relative; overflow: hidden;
+  border: 2px solid rgba(255,255,255,.12);
+}
+.pack-card:hover { transform: scale(1.06); }
+.pack-card.Bronze  { background: linear-gradient(160deg, #3D1A00, #8B4500); box-shadow: 0 4px 20px rgba(205,127,50,.4); }
+.pack-card.Silver  { background: linear-gradient(160deg, #1A1A1A, #505050); box-shadow: 0 4px 20px rgba(192,192,192,.4); }
+.pack-card.Gold    { background: linear-gradient(160deg, #3D2800, #A07000); box-shadow: 0 4px 24px rgba(255,215,0,.45); }
+.pack-card.Diamond { background: linear-gradient(160deg, #0D0030, #4A0080); box-shadow: 0 4px 32px rgba(139,0,255,.55), 0 0 48px rgba(0,191,255,.2); }
+.pack-icon   { font-size: 48px; }
+.pack-title  { font-size: 18px; letter-spacing: 2px; color: #fff; }
+.pack-count  { font-size: 11px; color: rgba(255,255,255,.55); letter-spacing: 1px; }
+
+/* Pack opening animation */
+.pack-open-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.92);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 24px;
+}
+.pack-open-overlay.hidden { display: none; }
+
+@keyframes cardReveal {
+  0%   { transform: rotateY(90deg) scale(.8); opacity: 0; }
+  60%  { transform: rotateY(-10deg) scale(1.05); }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+.pack-reveal { animation: cardReveal .6s ease forwards; }
+
+@keyframes packShake {
+  0%,100% { transform: rotate(0deg); }
+  25%  { transform: rotate(-5deg); }
+  75%  { transform: rotate(5deg); }
+}
+.pack-shaking { animation: packShake .15s ease infinite; }
+
+/* Collection grid */
+.collection-grid {
+  display: flex; flex-wrap: wrap; gap: 14px;
+}
+
+/* Rarity border highlight on hover */
+.card.selected { outline: 3px solid var(--ball); outline-offset: 2px; }
