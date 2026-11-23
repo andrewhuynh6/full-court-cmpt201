@@ -1,4 +1,4 @@
-# FULL COURT — CMPT 201 Learning Game 🏀
+# FULL COURT — CMPT 201 Learning Game 
 
 A basketball-themed educational web app for CMPT 201 (Systems Programming). Learn, earn player cards, and build your team.
 
