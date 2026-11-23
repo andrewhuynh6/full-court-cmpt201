@@ -33,10 +33,22 @@ function loadState() {
     if (raw) {
       const s = JSON.parse(raw);
       // Merge defaults for any missing keys
-      return deepMerge(DEFAULT_STATE, s);
+      return refreshSavedCards(deepMerge(DEFAULT_STATE, s));
     }
   } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+// Saved cards are copies; re-sync identity fields so data fixes (headshot id, name, team) reach existing saves.
+function refreshSavedCards(state) {
+  const byId = Object.fromEntries(NBA_PLAYERS.map(p => [p.id, p]));
+  const sync = card => {
+    const t = byId[String(card.id).replace(/^st_[A-Z]+_/, '')];
+    if (t) Object.assign(card, { nbaId: t.nbaId, name: t.name, team: t.team, num: t.num });
+  };
+  (state.team || []).forEach(c => c && sync(c));
+  (state.collection || []).forEach(c => c && sync(c));
+  return state;
 }
 
 function saveState(state) {

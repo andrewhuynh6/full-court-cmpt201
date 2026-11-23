@@ -247,7 +247,7 @@ function renderDashboard() {
               const count = AppState.collection.filter(c=>c.rarity===r).length;
               return `<div style="text-align:center;min-width:48px">
                 <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${rarityColor(r)}">${count}</div>
-                <div style="font-size:9px;color:var(--dim)">${r}</div>
+                <div style="font-size:11px;color:var(--dim)">${r}</div>
               </div>`;
             }).join('')}
           </div>
@@ -329,7 +329,7 @@ function renderTeamPage() {
             <div class="collection-grid" id="bench-grid">
               ${bench.map((pl,i) => `<div onclick="swapPlayer(${i})" style="cursor:pointer;position:relative">
                 ${buildCard(pl)}
-                <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--dim)">${pl.pos}</div>
+                <div style="text-align:center;margin-top:4px;font-size:11px;color:var(--dim)">${pl.pos}</div>
               </div>`).join('')}
             </div>`}
       </div>
@@ -356,7 +356,7 @@ function filterBench(pos, btn) {
     const realIdx = bench.indexOf(pl);
     return `<div onclick="swapPlayer(${realIdx})" style="cursor:pointer;position:relative">
       ${buildCard(pl)}
-      <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--dim)">${pl.pos}</div>
+      <div style="text-align:center;margin-top:4px;font-size:11px;color:var(--dim)">${pl.pos}</div>
     </div>`;
   }).join('');
 }
@@ -473,7 +473,7 @@ function renderSeason() {
             ${done
               ? `<button class="btn btn-secondary btn-sm" onclick="showGameDay('${st.chId}')">Game Day</button>`
               : `<button class="btn btn-primary btn-sm" onclick="showChapter('${st.chId}');navigate('learn')">Train →</button>`}
-            ${done ? '<span class="tag ok" style="font-size:10px">CLEARED</span>' : ''}
+            ${done ? '<span class="tag ok">CLEARED</span>' : ''}
           </div>
         </div>`;
       }).join('')}
