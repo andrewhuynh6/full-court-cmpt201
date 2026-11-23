@@ -112,9 +112,9 @@ function renderLesson() {
     </div>
     <div style="padding:24px">
       <div class="stage-tabs">
-        <button class="stage-tab${currentStage==='learn'?' active':''}${lrn?' done':''}" onclick="switchStage('learn')">📖 ${lrn?'✓ ':''}Learn</button>
-        <button class="stage-tab${currentStage==='practice'?' active':''}${prc?' done':''}" onclick="switchStage('practice')" ${!lrn&&!prc?'disabled':''}>🏋️ ${prc?'✓ ':''}Practice</button>
-        <button class="stage-tab${currentStage==='quiz'?' active':''}${qz?' done':''}" onclick="switchStage('quiz')" ${!prc&&!qz?'disabled':''}>🏆 ${qz?'✓ ':''}Quiz</button>
+        <button class="stage-tab${currentStage==='learn'?' active':''}${lrn?' done':''}" onclick="switchStage('learn')">${lrn?'✓ ':''}Learn</button>
+        <button class="stage-tab${currentStage==='practice'?' active':''}${prc?' done':''}" onclick="switchStage('practice')" ${!lrn&&!prc?'disabled':''}>${prc?'✓ ':''}Practice</button>
+        <button class="stage-tab${currentStage==='quiz'?' active':''}${qz?' done':''}" onclick="switchStage('quiz')" ${!prc&&!qz?'disabled':''}>${qz?'✓ ':''}Quiz</button>
       </div>
       <div id="stage-content"></div>
     </div>`;
@@ -199,7 +199,7 @@ function renderMCQQuestion(sc, mode) {
   sc.innerHTML = `<div class="mcq-wrap">
     <div class="mcq-score-bar">
       <div><div class="mcq-score-num">${mcq.score}/${mcq.questions.length}</div><div class="mcq-score-lbl">Score</div></div>
-      <div class="mcq-topic">${mode === 'quiz' ? '🏆 QUIZ' : '🏋️ PRACTICE'}</div>
+      <div class="mcq-topic">${mode === 'quiz' ? 'QUIZ' : 'PRACTICE'}</div>
       <div class="mcq-qnum">${mcq.q+1}/${mcq.questions.length}</div>
     </div>
     <div class="mcq-question">
@@ -295,7 +295,7 @@ function checkChapterComplete() {
     markChapter(AppState, currentChapter.id, currentChapter.packReward);
     updatePackBadge();
     setTimeout(() => {
-      showXPPopup(0, '🏀 Chapter Complete! ' + currentChapter.packReward + ' added to your queue!');
+      showXPPopup(0, 'Chapter Complete! ' + currentChapter.packReward + ' added to your queue!');
     }, 800);
   }
 }
@@ -319,7 +319,7 @@ function showGameDay(chId) {
 
 function renderGameDayLocked() {
   const v = document.getElementById('view-gameday');
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">🏀 GAME DAY</div></div>
+  v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY</div></div>
   <div style="padding:24px">
     <div class="empty-state">
       <div class="empty-icon">🔒</div>
@@ -349,7 +349,7 @@ function renderGameDayQuestion() {
   const q  = gameState.questions[gameState.q];
   const ch = CHAPTERS.find(c => c.id === gameState.chapterId);
   const letters = ['A','B','C','D'];
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">🏀 GAME DAY — ${ch?.title||''}</div></div>
+  v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY — ${ch?.title||''}</div></div>
   <div style="padding:24px">
     <div class="scoreboard">
       <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts">${gameState.pts}</div><div class="sb-info">Points</div></div>
@@ -419,7 +419,7 @@ function renderGameDayResult() {
   const win  = gameState.pts > gameState.opp;
   const pct  = Math.round(gameState.pts / (gameState.pts + gameState.opp) * 100);
   const xp   = Math.round(gameState.pts * 1.5);
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">🏀 FINAL BUZZER</div></div>
+  v.innerHTML = `<div class="topbar"><div class="topbar-title">FINAL BUZZER</div></div>
   <div style="padding:24px">
     <div class="scoreboard">
       <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts" style="color:${win?'var(--ok)':'var(--bad)'}">${gameState.pts}</div></div>

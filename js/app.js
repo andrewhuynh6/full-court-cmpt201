@@ -132,7 +132,7 @@ function showXPPopup(amount, msg) {
   el.id = 'xpPopup';
   el.className = 'xp-popup';
   el.innerHTML = amount
-    ? `<span>🏀</span><span class="xp-num">+${amount}</span><span style="font-size:12px;color:var(--dim)">XP EARNED</span>`
+    ? `<span class="xp-num">+${amount}</span><span style="font-size:12px;color:var(--dim)">XP EARNED</span>`
     : `<span style="font-size:13px;color:var(--gold)">${msg || ''}</span>`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2800);
@@ -157,7 +157,7 @@ function renderDashboard() {
       <div class="topbar-title">FULL COURT</div>
       <div class="topbar-actions">
         ${AppState.packQueue.length > 0
-          ? `<button class="btn btn-gold btn-sm" onclick="openPack(0)">📦 Open Pack (${AppState.packQueue.length})</button>`
+          ? `<button class="btn btn-gold btn-sm" onclick="openPack(0)">Open Pack (${AppState.packQueue.length})</button>`
           : ''}
       </div>
     </div>
@@ -167,7 +167,7 @@ function renderDashboard() {
         <!-- Profile -->
         <div class="panel" style="grid-column:span 2">
           <div class="profile-panel">
-            <div class="profile-avatar">🏀</div>
+            <div class="profile-avatar"></div>
             <div class="profile-info" style="flex:1">
               <div class="level">LVL ${p.level} · SEASON 01</div>
               <div class="name">${p.name}</div>
@@ -188,7 +188,7 @@ function renderDashboard() {
 
         <!-- Next Reward -->
         <div class="panel">
-          <div class="panel-title">🎯 Next Reward</div>
+          <div class="panel-title">Next Reward</div>
           ${nextPack
             ? `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${nextPack.type}</div>
                <div style="font-size:11px;color:var(--dim)">${nextPack.current} / ${nextPack.target} XP</div>
@@ -198,7 +198,7 @@ function renderDashboard() {
 
         <!-- Team OVR -->
         <div class="panel">
-          <div class="panel-title">👥 My Team</div>
+          <div class="panel-title">My Team</div>
           <div class="team-ovr-big">
             <div class="ovr-badge">${ovr}</div>
             <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Team Overall</div>
@@ -211,7 +211,7 @@ function renderDashboard() {
 
         <!-- Training Progress -->
         <div class="panel" style="grid-column:span 2">
-          <div class="panel-title">📖 Training Progress</div>
+          <div class="panel-title">Training Progress</div>
           <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px">
             <div class="stat-pill"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>
             <div style="flex:1">
@@ -294,7 +294,7 @@ function renderTeamPage() {
 
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">👥 MY TEAM</div>
+      <div class="topbar-title">MY TEAM</div>
     </div>
     <div style="padding:24px">
       <div class="page-hdr">
@@ -320,9 +320,9 @@ function renderTeamPage() {
       </div>
 
       <div id="bench-section" style="margin-top:28px">
-        <div class="panel-title">📦 Available Cards (${bench.length})</div>
+        <div class="panel-title">Available Cards (${bench.length})</div>
         ${bench.length === 0
-          ? `<div class="empty-state"><div class="empty-icon">📦</div><h3>NO CARDS YET</h3><p>Complete lessons to earn player packs!</p></div>`
+          ? `<div class="empty-state"><h3>NO CARDS YET</h3><p>Complete lessons to earn player packs!</p></div>`
           : `<div class="coll-filter" id="bench-filter">
               <button class="filter-btn active" onclick="filterBench(null,this)">All</button>
               ${['PG','SG','SF','PF','C'].map(pos => `<button class="filter-btn" onclick="filterBench('${pos}',this)">${pos}</button>`).join('')}
@@ -438,7 +438,7 @@ function renderSeason() {
 
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">🏆 SEASON PROGRESS</div>
+      <div class="topbar-title">SEASON PROGRESS</div>
     </div>
     <div style="padding:24px">
       <div class="page-hdr">
@@ -472,7 +472,7 @@ function renderSeason() {
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
             ${done
-              ? `<button class="btn btn-secondary btn-sm" onclick="showGameDay('${st.chId}')">🏀 Game Day</button>`
+              ? `<button class="btn btn-secondary btn-sm" onclick="showGameDay('${st.chId}')">Game Day</button>`
               : `<button class="btn btn-primary btn-sm" onclick="showChapter('${st.chId}');navigate('learn')">Train →</button>`}
             ${done ? '<span class="tag ok" style="font-size:10px">CLEARED</span>' : ''}
           </div>
