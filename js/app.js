@@ -167,8 +167,7 @@ function renderDashboard() {
         <!-- Profile -->
         <div class="panel" style="grid-column:span 2">
           <div class="profile-panel">
-            <div class="profile-avatar"></div>
-            <div class="profile-info" style="flex:1">
+            <div class="profile-info" style="flex:1;min-width:0">
               <div class="level">LVL ${p.level} · SEASON 01</div>
               <div class="name">${p.name}</div>
               <div class="rank">${p.rank}</div>
@@ -178,7 +177,7 @@ function renderDashboard() {
               </div>
               <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(Math.round(p.xp/p.xpToNext*100),100)}%"></div></div>
             </div>
-            <div style="display:flex;gap:12px">
+            <div class="profile-stats">
               <div class="stat-pill"><div class="stat-num">${AppState.stats.lessonsCompleted}</div><div class="stat-lbl">Lessons</div></div>
               <div class="stat-pill"><div class="stat-num">${AppState.stats.quizzesPassed}</div><div class="stat-lbl">Quizzes</div></div>
               <div class="stat-pill"><div class="stat-num">${AppState.collection.length}</div><div class="stat-lbl">Cards</div></div>

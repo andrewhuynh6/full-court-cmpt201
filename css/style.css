@@ -217,6 +217,9 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
 .profile-xp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .profile-xp-label { font-size: 11px; color: var(--dim); }
 
+/* Profile stats row */
+.profile-stats { display: flex; gap: 10px; align-items: flex-start; flex-shrink: 0; }
+
 /* Team overview */
 .team-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .team-ovr-big { text-align: center; margin-bottom: 14px; }
@@ -412,27 +415,82 @@ code   { font-family: 'Courier New', monospace; background: rgba(255,255,255,.07
 
 @media (max-width: 700px) {
   :root { --sidebar-w: 0px; }
+
+  /* ── BOTTOM TAB BAR ── */
   .sidebar {
-    width: 100%; height: auto; position: static;
-    flex-direction: row; overflow-x: auto; overflow-y: hidden;
-    border-right: none; border-bottom: 1px solid rgba(255,255,255,.06);
-    max-height: 56px;
+    width: 100%; height: 60px; min-height: 60px;
+    position: fixed; bottom: 0; left: 0; top: auto;
+    flex-direction: row; overflow: hidden;
+    border-right: none; border-top: 1px solid var(--line);
+    background: var(--panel); z-index: 200;
   }
   .sidebar-logo, .sidebar-footer, .nav-section-label { display: none; }
-  .sidebar-nav { display: flex; flex-direction: row; padding: 0; }
-  .nav-item { flex-direction: row; gap: 0; padding: 0 13px; height: 56px; min-width: auto; border-left: none; border-bottom: 3px solid transparent; font-size: 11px; white-space: nowrap; }
-  .nav-item.active { border-bottom-color: var(--ball); border-left-color: transparent; }
+  .sidebar-nav {
+    display: flex; flex-direction: row; padding: 0;
+    width: 100%; height: 100%; align-items: stretch;
+  }
+  .nav-item {
+    flex: 1; flex-direction: column; gap: 2px;
+    padding: 6px 4px; height: 60px; min-width: 0;
+    border-left: none; border-top: 3px solid transparent;
+    font-size: 10px; white-space: nowrap;
+    justify-content: center; align-items: center;
+    text-align: center; overflow: hidden;
+  }
+  .nav-item span { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .nav-item.active { border-top-color: var(--ball); border-left-color: transparent; color: var(--ball); background: rgba(232,98,42,.07); }
+  .nav-badge { margin-left: 0; margin-top: 1px; font-size: 9px; padding: 0 5px; }
+
+  /* ── LAYOUT ── */
   .app { flex-direction: column; }
-  .main { margin-left: 0; }
-  .view { padding: 14px; }
-  .dashboard-grid { grid-template-columns: 1fr; }
+  .main { margin-left: 0; padding-bottom: 60px; min-height: calc(100vh - 60px); }
+  .view { padding: 12px; }
+  .topbar { padding: 10px 14px; position: sticky; top: 0; }
+
+  /* ── DASHBOARD ── */
+  .dashboard-grid { grid-template-columns: 1fr; gap: 10px; }
   .db-span2, .db-span3 { grid-column: span 1; }
-  .team-grid { grid-template-columns: repeat(2, 1fr); }
-  .topbar { padding: 10px 14px; }
+
+  /* Profile card: stack rank/xp, then stats full width */
+  .profile-panel { flex-wrap: wrap; gap: 10px; }
+  .profile-info { min-width: 0; }
+  .profile-stats { width: 100%; justify-content: space-around; }
+  .stat-pill { flex: 1; padding: 8px 4px; }
+  .stat-num  { font-size: 22px; }
+
+  /* Team card row: horizontal scroll */
+  .team-row {
+    display: flex; flex-wrap: nowrap; gap: 8px;
+    overflow-x: auto; justify-content: flex-start;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .team-row::-webkit-scrollbar { display: none; }
+  .team-row .card { flex-shrink: 0; }
+
+  /* Team page grid */
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Learn: stage tabs full width */
+  .stage-tabs { gap: 0; }
+  .stage-tab  { flex: 1; padding: 8px 4px; font-size: 14px; text-align: center; }
+
+  /* MCQ: full width */
+  .mcq-wrap { max-width: 100%; }
+
+  /* Scoreboard */
+  .scoreboard { padding: 10px 12px; gap: 10px; }
+  .sb-pts  { font-size: 36px; }
+  .sb-name { font-size: 16px; }
+
+  /* XP popup: position above bottom bar */
+  .xp-popup { top: auto; bottom: 72px; right: 12px; left: 12px; justify-content: center; }
 }
 
 @media (max-width: 480px) {
-  .team-row .card { width: 100px; min-width: 100px; height: 145px; }
-  .team-row .card .card-ovr { font-size: 22px; }
+  .team-row .card { width: 110px; min-width: 110px; height: 158px; }
+  .team-row .card .card-ovr { font-size: 24px; }
   .team-row .card .card-name { font-size: 10px; }
+  .profile-info .name { font-size: 20px; }
 }

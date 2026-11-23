@@ -8,7 +8,6 @@ let currentChapter = null;
 let mcq = { q: 0, answered: false, score: 0, done: false, questions: [] };
 
 function showLearnView() {
-  navigate('learn');
   renderChapterList();
 }
 
