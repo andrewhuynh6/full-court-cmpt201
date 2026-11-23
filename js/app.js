@@ -223,7 +223,7 @@ function renderDashboard() {
             const doneLs = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
             const p = Math.round(doneLs/ch.lessons.length*100);
             return `<div class="ch-row">
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${done?'var(--ok)':'var(--dim)'};min-width:28px">${ch.num}</div>
+              <div class="ch-num${done?' done':''}">${ch.num}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:12px;color:var(--text);margin-bottom:3px">${ch.title}</div>
                 <div class="progress-bar" style="height:5px"><div class="progress-fill" style="width:${p}%"></div></div>
