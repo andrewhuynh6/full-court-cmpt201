@@ -509,6 +509,32 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
 .review-sub { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
 .review-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 18px; background: rgba(185,28,28,.07); border: 1px solid var(--bad); border-radius: var(--r); }
 
+.mcq-opt.picked, .chip.picked, .code-line.picked { border-color: var(--ball); background: var(--ball2); }
+.code-line.picked { border-left-color: #FF9566; background: rgba(255,149,102,.2); }
+.blank-slot.picked { color: #FFD24D; border-bottom: 2px solid #FFD24D; }
+.q-recorded { margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--dim); }
+.exam-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 18px 22px; margin-bottom: 18px; background: linear-gradient(135deg, var(--hero-a), var(--hero-b)); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-sm); }
+.exam-card-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; color: var(--white); }
+.exam-card-title .icon { color: var(--ball); }
+.exam-card-sub { font-size: 14px; color: var(--dim); margin-top: 2px; }
+.exam-rules { padding-left: 20px; font-size: 16px; }
+.exam-rules li { margin-bottom: 10px; }
+.exam-best { margin-top: 8px; padding: 10px 14px; background: var(--panel2); border-radius: var(--r-sm); font-size: 15px; }
+.exam-timer { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--white); padding: 2px 14px; border-radius: var(--r-sm); background: var(--panel2); font-variant-numeric: tabular-nums; }
+.exam-timer.low { color: var(--bad); background: rgba(185,28,28,.1); }
+.exam-meta { font-size: 15px; color: var(--dim); margin-bottom: 8px; }
+.exam-ch { display: grid; grid-template-columns: minmax(130px, 220px) 1fr 48px; align-items: center; gap: 12px; margin-bottom: 12px; }
+.exam-ch-name { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--white); }
+.exam-ch-name .icon { color: var(--ball); }
+.exam-ch-score { font-size: 15px; font-weight: 700; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+.exam-weak { margin-top: 8px; font-size: 15px; color: var(--text); }
+.exam-miss { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.exam-miss:last-of-type { border-bottom: none; }
+.exam-miss-q { font-size: 15.5px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+.exam-miss-a { font-size: 14.5px; margin-bottom: 6px; }
+.exam-miss-a span { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--ok); margin-bottom: 4px; }
+.exam-miss-e { font-size: 14.5px; color: var(--dim); }
+
 /* ── VISUALIZATIONS ──────────────────────────────────────────── */
 
 .viz { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin: 18px 0 8px; }
@@ -620,6 +646,8 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
   .sb-pts  { font-size: 42px; }
   .sb-name { font-size: 18px; }
 
+  .exam-ch { grid-template-columns: 1fr 44px; }
+  .exam-ch-bar { grid-column: 1 / -1; order: 3; }
   .step-card { padding: 18px; }
   .step-card h3 { font-size: 21px; }
   .viz { padding: 12px; }

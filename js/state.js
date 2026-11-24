@@ -15,6 +15,7 @@ const DEFAULT_STATE = {
   team: null,          // set on first load
   collection: [],      // all player cards earned
   packQueue: [],       // packs waiting to be opened
+  exam: { best: 0, attempts: 0, passed: false },
   review: {},          // { questionId: { miss, streak, last } } missed questions to re-ask
   lessons: {},         // { lessonId: { learn, practice, quiz } }
   chapters: {},        // { chapterId: { completed, gameday } }

@@ -226,6 +226,7 @@ function renderDashboard() {
             </div>`;
           }).join('')}
           <button class="btn btn-primary" style="margin-top:6px" onclick="navigate('learn')">View All Chapters →</button>
+          <button class="btn btn-gold" style="margin-top:6px;margin-left:8px" onclick="showExamIntro()">Final exam</button>
         </div>
 
         <div class="db-stack">

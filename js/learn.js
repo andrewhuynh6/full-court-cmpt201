@@ -28,14 +28,15 @@ function qBody(q) {
 }
 
 // ── Shared question renderer: mcq, bug (tap the line), blank (fill in), order (arrange lines) ──
-function renderQuestion(host, q, done) {
+function renderQuestion(host, q, done, opts = {}) {
+  const quiet = !!opts.quiet;   // exam mode: record the answer but do not reveal it
   const type = q.type || 'mcq';
   const L = ['A', 'B', 'C', 'D'];
   let finished = false;
   const finish = ok => {
     if (finished) return;
     finished = true;
-    host.querySelector('.q-fb').innerHTML = `<div class="mcq-fb ${ok ? 'c' : 'w'}">${ok ? '✓ Correct! ' : '✗ Not quite. '}${q.exp}</div>`;
+    host.querySelector('.q-fb').innerHTML = quiet ? '<div class="q-recorded">Answer recorded</div>' : `<div class="mcq-fb ${ok ? 'c' : 'w'}">${ok ? '✓ Correct! ' : '✗ Not quite. '}${q.exp}</div>`;
     done(ok);
   };
 
@@ -46,7 +47,7 @@ function renderQuestion(host, q, done) {
       if (!b || finished) return;
       const i = +b.dataset.i, opts = host.querySelectorAll('.mcq-opt');
       opts.forEach(o => { o.disabled = true; });
-      if (i === q.ans) b.classList.add('cor'); else { b.classList.add('wrg'); opts[q.ans].classList.add('show'); }
+      if (quiet) b.classList.add('picked'); else if (i === q.ans) b.classList.add('cor'); else { b.classList.add('wrg'); opts[q.ans].classList.add('show'); }
       finish(i === q.ans);
     });
   }
@@ -58,7 +59,7 @@ function renderQuestion(host, q, done) {
       if (!b || finished) return;
       const i = +b.dataset.i, rows = host.querySelectorAll('.code-line');
       rows.forEach(r => { r.disabled = true; });
-      if (i === q.ans) b.classList.add('cor'); else { b.classList.add('wrg'); rows[q.ans].classList.add('show'); }
+      if (quiet) b.classList.add('picked'); else if (i === q.ans) b.classList.add('cor'); else { b.classList.add('wrg'); rows[q.ans].classList.add('show'); }
       finish(i === q.ans);
     });
   }
@@ -72,8 +73,8 @@ function renderQuestion(host, q, done) {
       const i = +b.dataset.i, chips = host.querySelectorAll('.chip'), slot = host.querySelector('.blank-slot');
       chips.forEach(c => { c.disabled = true; });
       slot.textContent = q.opts[i];
-      slot.classList.add(i === q.ans ? 'cor' : 'wrg');
-      if (i !== q.ans) chips[q.ans].classList.add('show');
+      slot.classList.add(quiet ? 'picked' : i === q.ans ? 'cor' : 'wrg');
+      if (quiet) b.classList.add('picked'); else if (i !== q.ans) chips[q.ans].classList.add('show');
       finish(i === q.ans);
     });
   }
@@ -101,9 +102,9 @@ function renderQuestion(host, q, done) {
       else if (pl) { const k = +pl.dataset.k; pool.push(chosen[k]); chosen.splice(k, 1); draw(); }
       else if (chk && !chk.disabled) {
         const ok = chosen.every((idx, k) => idx === k);
-        host.querySelectorAll('.order-answer .order-chip').forEach((el, k) => { el.disabled = true; el.classList.add(chosen[k] === k ? 'cor' : 'wrg'); });
+        host.querySelectorAll('.order-answer .order-chip').forEach((el, k) => { el.disabled = true; if (!quiet) el.classList.add(chosen[k] === k ? 'cor' : 'wrg'); });
         chk.disabled = true;
-        if (!ok) host.querySelector('.q-fb').insertAdjacentHTML('beforebegin', `<div class="order-label">Correct order</div><div class="code-lines">${q.lines.map((ln, i) => `<div class="code-line static"><span class="ln">${i + 1}</span><span class="lt${q.prose ? ' prose' : ''}">${H_esc(ln)}</span></div>`).join('')}</div>`);
+        if (!ok && !quiet) host.querySelector('.q-fb').insertAdjacentHTML('beforebegin', `<div class="order-label">Correct order</div><div class="code-lines">${q.lines.map((ln, i) => `<div class="code-line static"><span class="ln">${i + 1}</span><span class="lt${q.prose ? ' prose' : ''}">${H_esc(ln)}</span></div>`).join('')}</div>`);
         finish(ok);
       }
     });
@@ -128,6 +129,7 @@ function renderChapterList() {
         <p>Select a chapter to begin your training</p>
       </div>
       ${reviewBannerHtml()}
+      ${examCardHtml()}
       ${CHAPTERS.map(ch => {
         const done = isChapterComplete(AppState, ch);
         const doneLessons = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
