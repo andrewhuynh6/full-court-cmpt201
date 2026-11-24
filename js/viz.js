@@ -372,6 +372,138 @@ const VIZ = (() => {
     ];
   }
 
+  // ── 15. Buffered I/O: many small writes become one system call ──
+  function bufio() {
+    const f = (fill, call, o2, cap, kern, calls) => {
+      let o = box(20, 50, 160, 100, '') + t(100, 76, 'Your program', 'b') + t(100, 108, call, 'm');
+      o += box(230, 30, 190, 150, fill >= 8 ? 'a' : '') + t(325, 54, 'stdio buffer', 'b') + t(325, 74, 'in user space', 's');
+      for (let i = 0; i < 8; i++) o += `<rect x="${244 + i * 21}" y="106" width="19" height="34" rx="3" class="vz-box ${i < fill ? 'a' : 'dim'}"/>`;
+      o += box(470, 50, 150, 100, kern ? 'ok' : '') + t(545, 76, 'Kernel', 'b') + t(545, 108, kern || 'waiting', 'm ' + (kern ? 'ok' : 's'));
+      o += line(180, 100, 230, 100, fill ? 'a' : 'n') + (o2 || '');
+      o += t(320, 214, calls, 'm b');
+      return { svg: o, cap };
+    };
+    const flush = line(420, 100, 470, 100, 'a');
+    return [
+      f(1, 'fputc("a")', '', 'fputc copies the byte into the stdio buffer, in your own memory. No system call yet.', '', 'write() calls so far: 0'),
+      f(5, 'fputc x 5', '', 'More bytes pile up in the buffer. Still no system call.', '', 'write() calls so far: 0'),
+      f(8, 'fputc ...', flush, 'The buffer is full, so stdio flushes it.', '', 'write() calls so far: 0'),
+      f(0, 'buffer empty', '', 'One write() hands the whole buffer to the kernel. A full buffer costs one system call.', '4096 bytes', 'write() calls so far: 1'),
+      f(0, 'write(fd,&c,1)', '', 'Unbuffered, the same 4096 bytes would have cost 4096 separate system calls.', '1 byte each', 'unbuffered: 4096 write() calls'),
+    ];
+  }
+
+  // ── 16. File offsets: separate open vs dup ─────────────────────
+  function offsetViz() {
+    const fd = (y, n, d = '') => box(20, y, 90, 44, d) + t(65, y + 28, 'fd ' + n, 'm b');
+    const ofd = (y, name, off) => box(240, y, 170, 80, 'a') + t(325, y + 26, name, 'b') + t(325, y + 54, 'offset: ' + off, 'm b');
+    const file = box(500, 70, 120, 110, '') + t(560, 112, 'data.txt', 'b') + t(560, 136, 'one inode', 's');
+    const links = (a, b) => line(250, 50 + 0, 500, 100, 'n', false) + (b ? line(250, 160, 500, 150, 'n', false) : '');
+    const base = (extra) => ({ svg: t(65, 24, 'DESCRIPTORS', 's') + t(325, 24, 'OPEN FILE DESCRIPTIONS', 's') + t(560, 24, 'FILE', 's') + file + extra });
+    const toFile = y => line(410, y, 500, 125, 'n', false);
+    return [
+      { svg: base(fd(50, 3, 'a') + ofd(40, 'description #1', 0) + line(110, 72, 240, 72, 'a') + toFile(80)).svg,
+        cap: 'open("data.txt") creates an open file description. The offset (0) lives in it, not in the file.' },
+      { svg: base(fd(50, 3) + fd(150, 4, 'a') + ofd(40, 'description #1', 0) + ofd(140, 'description #2', 0) + line(110, 72, 240, 72, 'n') + line(110, 172, 240, 172, 'a') + toFile(80) + toFile(180)).svg,
+        cap: 'A second open() makes a separate description with its own offset.' },
+      { svg: base(fd(50, 3, 'a') + fd(150, 4) + ofd(40, 'description #1', 5) + ofd(140, 'description #2', 0) + line(110, 72, 240, 72, 'a') + line(110, 172, 240, 172, 'n') + toFile(80) + toFile(180)).svg,
+        cap: 'read(fd 3, 5 bytes) moves only description #1. fd 4 still reads from byte 0.' },
+      { svg: base(fd(50, 3) + fd(100, 5, 'a') + fd(170, 4) + ofd(40, 'description #1', 5) + ofd(140, 'description #2', 0) + line(110, 72, 240, 72, 'n') + line(110, 122, 240, 90, 'a') + line(110, 192, 240, 192, 'n') + toFile(80) + toFile(180)).svg,
+        cap: 'dup(3) gives fd 5 the SAME description, so fd 3 and fd 5 now share one offset.' },
+      { svg: base(fd(50, 3, 'ok') + fd(100, 5, 'a') + fd(170, 4) + ofd(40, 'description #1', 10) + ofd(140, 'description #2', 0) + line(110, 72, 240, 72, 'n') + line(110, 122, 240, 90, 'a') + line(110, 192, 240, 192, 'n') + toFile(80) + toFile(180)).svg,
+        cap: 'read(fd 5, 5 bytes) moved the offset to 10, and fd 3 sees it too. fork shares descriptions the same way.' },
+    ];
+  }
+
+  // ── 17. epoll: wait on many sockets, handle only the ready ones ─
+  function epollViz() {
+    const slot = (i, label, sub, cls) => box(14 + i * 124, 28, 112, 66, cls) + t(70 + i * 124, 56, label, 'b') + t(70 + i * 124, 78, sub, 's');
+    const ep = (n) => box(14, 130, 612, 46, 'a') + t(320, 159, 'epoll instance watches the fds above', 'm b') + Array.from({ length: n }, (_, i) => line(70 + i * 124, 94, 70 + i * 124, 130, 'n', false)).join('');
+    const ret = list => t(320, 214, 'epoll_wait returns: ' + list, 'm b ' + (list === 'nothing (blocked)' ? 's' : 'ok'));
+    const f = (states, extra, list, cap) => {
+      const names = [['fd 3', 'listening'], ['fd 4', 'client'], ['fd 5', 'client'], ['fd 6', 'client']];
+      let o = names.map((n, i) => slot(i, n[0], states[i] === 'ready' ? 'READY' : n[1], states[i] === 'ready' ? 'ok' : '')).join('');
+      o += extra || '';
+      o += ep(extra ? 5 : 4) + ret(list);
+      return { svg: o, cap };
+    };
+    const newSlot = box(14 + 4 * 124, 28, 112, 66, 'a') + t(70 + 4 * 124, 56, 'fd 7', 'b') + t(70 + 4 * 124, 78, 'new client', 's');
+    return [
+      f(['', '', '', ''], '', 'nothing (blocked)', 'epoll_wait blocks while no watched descriptor is ready. One thread, many sockets.'),
+      f(['', '', 'ready', ''], '', '[ fd 5 ]', 'A client sends data on fd 5. epoll_wait wakes and returns ONLY the ready descriptors.'),
+      f(['', '', '', ''], '', 'nothing (blocked)', 'The loop read fd 5 and goes back to epoll_wait. Idle sockets cost nothing.'),
+      f(['ready', '', '', ''], '', '[ fd 3 ]', 'A new client connects: the LISTENING socket (fd 3) is ready. Call accept, do not read.'),
+      f(['', '', '', ''], newSlot, 'nothing (blocked)', 'accept returned fd 7, and epoll_ctl(ADD) registers it. Now fd 7 is watched too.'),
+    ];
+  }
+
+  // ── 18. mmap: file mapping vs anonymous mapping ────────────────
+  function mmapViz() {
+    const disk = (txt, cls) => box(20, 50, 150, 100, cls || '') + t(95, 76, 'data.bin', 'b') + t(95, 98, 'on disk', 's') + t(95, 130, txt, 'm b');
+    const region = (txt, cls, label, x = 250) => box(x, 50, 170, 100, cls) + t(x + 85, 76, 'mapped region', 'b') + t(x + 85, 98, label, 's') + t(x + 85, 130, txt, 'm b');
+    const child = txt => box(400, 50, 170, 100, 'ok') + t(485, 76, 'child process', 'b') + t(485, 98, 'inherited', 's') + t(485, 130, txt, 'm b');
+    return [
+      { svg: disk('H i', 'a') + region('H i', 'a', 'backed by the file') + line(170, 100, 250, 100, 'a') + t(210, 84, 'mmap(fd)', 's') + t(320, 200, 'FILE MAPPING (MAP_SHARED)', 's'),
+        cap: 'A file mapping starts with the file contents. The region is backed by data.bin.' },
+      { svg: disk('X i', 'ok') + region('X i', 'ok', 'p[0] = \'X\'') + line(250, 100, 170, 100, 'ok') + t(320, 200, 'FILE MAPPING (MAP_SHARED)', 's'),
+        cap: 'Writing through a shared file mapping changes the file itself.' },
+      { svg: region('0 0', 'a', 'no file behind it') + t(335, 28, 'MAP_ANONYMOUS, fd = -1', 's') + t(320, 200, 'ANONYMOUS MAPPING', 's'),
+        cap: 'An anonymous mapping has no file. It is fresh memory that starts as zeros.' },
+      { svg: region('42', 'ok', '*p = 42 (parent)', 70) + child('42') + line(240, 100, 400, 100, 'ok') + t(320, 200, 'MAP_SHARED | MAP_ANONYMOUS, then fork()', 's'),
+        cap: 'Mapped before fork, a shared anonymous region is inherited, so parent and child see the same bytes. Unrelated processes cannot reach it.' },
+    ];
+  }
+
+  // ── 19. Strict alternation with two semaphores ─────────────────
+  function pingpong() {
+    const thr = (x, name, line1, cls) => box(x, 60, 190, 100, cls) + t(x + 95, 86, name, 'b') + t(x + 95, 118, line1, 'm');
+    const sem = (y, name, n) => box(250, y, 140, 56, n ? 'ok' : '') + t(320, y + 24, name, 'm b') + t(320, y + 46, 'value = ' + n, 'm ' + (n ? 'ok' : 's')) + (n ? ball('sp-' + name, 410, y + 28) : '');
+    const f = (a, b, sp, so, out, cap, pc, qc) => ({
+      svg: thr(30, 'ping thread', a, pc || '') + thr(420, 'pong thread', b, qc || '') + sem(20, 'sem_ping', sp) + sem(110, 'sem_pong', so) + t(320, 214, out ? 'output: ' + out : 'output:', 'm b'),
+      cap });
+    return [
+      f('sem_wait(sem_ping)', 'sem_wait(sem_pong)', 1, 0, '', 'Start: sem_ping = 1 (ping may go), sem_pong = 0 (pong must wait). Each thread waits on its OWN semaphore.', 'a', ''),
+      f('prints "ping"', 'blocked', 0, 0, 'ping', 'ping passes its wait (value 1 to 0) and prints. pong is still blocked on sem_pong = 0.', 'ok', 'bad dim'),
+      f('sem_post(sem_pong)', 'wakes up', 0, 1, 'ping', 'ping posts the OTHER semaphore. sem_pong becomes 1, so pong may go.', 'a', 'a'),
+      f('sem_wait(sem_ping)', 'prints "pong"', 0, 0, 'ping pong', 'pong passes its wait and prints. ping is now blocked at sem_ping = 0.', 'bad dim', 'ok'),
+      f('wakes up', 'sem_post(sem_ping)', 1, 0, 'ping pong', 'pong posts sem_ping (back to 1). The cycle repeats: ping, pong, ping, pong.', 'a', 'a'),
+    ];
+  }
+
+  // ── 20. Secret key vs public key ───────────────────────────────
+  function keysViz() {
+    const person = (x, n) => box(x, 50, 110, 60, '') + t(x + 55, 86, n, 'b');
+    return [
+      { svg: person(30, 'Alice') + person(500, 'Bob') + box(250, 56, 140, 48, 'a') + t(320, 86, 'secret key K', 'm b') + line(140, 80, 250, 80, 'a') + line(390, 80, 500, 80, 'a') + t(320, 160, 'The SAME key K locks and unlocks.', 's') + t(320, 190, 'Fast, but both must hold K safely.', 's'),
+        cap: 'Secret-key (symmetric): Alice and Bob use one shared key K for both encrypting and decrypting.' },
+      { svg: person(30, 'Alice') + person(500, 'Bob') + box(250, 20, 140, 44, 'ok') + t(320, 48, 'public key', 'm b') + box(500, 130, 110, 44, 'bad') + t(555, 158, 'private key', 'm b') + line(500, 60, 390, 44, 'ok') + t(320, 98, 'Bob publishes his public key', 's') + t(320, 120, 'The private key never leaves Bob.', 's'),
+        cap: 'Public-key (asymmetric): Bob publishes a public key for anyone and keeps the private key secret.' },
+      { svg: person(30, 'Alice') + person(500, 'Bob') + box(225, 20, 190, 44, 'ok') + t(320, 48, 'Bob\'s public key', 'm b') + box(250, 90, 140, 44, 'a') + t(320, 118, 'ciphertext', 'm b') + line(140, 72, 225, 42, 'ok') + line(140, 90, 250, 112, 'a') + line(390, 112, 500, 90, 'a') + t(320, 170, 'Alice encrypts with the PUBLIC key.', 's'),
+        cap: 'Alice encrypts with Bob\'s public key and sends the ciphertext.' },
+      { svg: person(30, 'Alice') + person(500, 'Bob') + box(250, 90, 140, 44, 'a') + t(320, 118, 'ciphertext', 'm b') + box(500, 130, 110, 44, 'ok') + t(555, 158, 'private key', 'm b') + line(555, 130, 555, 112, 'ok') + t(555, 40, 'plaintext', 'm ok') + t(320, 170, 'An eavesdropper sees only the', 's') + t(320, 190, 'public key and ciphertext. No luck.', 's'),
+        cap: 'Only Bob\'s private key decrypts it. Anyone can encrypt to Bob, but only Bob can read it.' },
+    ];
+  }
+
+  // ── 21. Hash + digital signature ───────────────────────────────
+  function signViz() {
+    const doc = (x, y, label, cls) => box(x, y, 110, 70, cls) + t(x + 55, y + 30, 'photo', 'b') + t(x + 55, y + 52, label, 's');
+    const hashT = (x, y, h, cls) => box(x, y, 110, 44, cls) + t(x + 55, y + 18, 'hash', 's') + t(x + 55, y + 36, h, 'm b');
+    return [
+      { svg: doc(40, 40, 'original', 'a') + line(150, 75, 200, 75, 'a') + hashT(200, 53, '9f3a...', 'a') + t(320, 190, 'SIGNER', 's'),
+        cap: 'Step 1: hash the photo. Any change to the photo would change this digest completely.' },
+      { svg: doc(40, 40, 'original', '') + hashT(200, 53, '9f3a...', '') + line(310, 75, 360, 75, 'a') + box(360, 53, 130, 44, 'a') + t(425, 74, 'sig = Sign(', 'm b') + t(425, 90, 'private key)', 'm b') + t(320, 190, 'SIGNER', 's'),
+        cap: 'Step 2: sign the digest with your PRIVATE key. The result is the digital signature.' },
+      { svg: doc(40, 40, 'posted', '') + box(200, 53, 130, 44, 'a') + t(265, 80, 'signature', 'm b') + box(360, 53, 130, 44, 'ok') + t(425, 80, 'public key', 'm b') + t(320, 190, 'POSTED TOGETHER', 's'),
+        cap: 'Step 3: post the photo, the signature and your public key. Anyone can download all three.' },
+      { svg: doc(40, 40, 'as downloaded', '') + hashT(200, 53, '9f3a...', 'a') + box(360, 53, 130, 44, 'ok') + t(425, 74, 'check sig with', 's') + t(425, 90, 'public key', 'm b') + line(310, 75, 360, 75, 'ok') + t(545, 82, 'VALID', 'm b ok') + t(320, 190, 'VERIFIER', 's'),
+        cap: 'Verifier: recompute the hash (same 9f3a...) and check the signature with your public key. It matches, so the photo is untouched.' },
+      { svg: doc(40, 40, 'edited!', 'bad') + hashT(200, 53, '71c0...', 'bad') + box(360, 53, 130, 44, 'ok') + t(425, 74, 'check sig with', 's') + t(425, 90, 'public key', 'm b') + line(310, 75, 360, 75, 'b') + t(545, 82, 'REJECTED', 'm b bad') + t(320, 190, 'VERIFIER', 's'),
+        cap: 'If someone edits the photo, its hash becomes 71c0... which no longer matches the signature. Nobody else can forge a new one without your private key.' },
+    ];
+  }
+
+
   const DEFS = {
     memory:    { title: 'Stack, heap and pointers',                vb: '0 0 640 270', frames: memory },
     ptrarith:  { title: 'Pointer arithmetic steps by element size', vb: '0 0 640 230', frames: ptrarith },
@@ -387,6 +519,13 @@ const VIZ = (() => {
     clients:   { title: 'Serving many clients',                     vb: '0 0 640 260', frames: clients },
     pipe:      { title: 'A pipe between parent and child',          vb: '0 0 640 260', frames: pipe },
     shm:       { title: 'Shared memory between two processes',      vb: '0 0 640 260', frames: shm },
+    bufio:     { title: 'Buffered I/O: many writes, one system call', vb: '0 0 640 240', frames: bufio },
+    offset:    { title: 'File offsets: separate open vs dup',        vb: '0 0 640 250', frames: offsetViz },
+    epoll:     { title: 'epoll: only the ready descriptors',         vb: '0 0 640 240', frames: epollViz },
+    mmap:      { title: 'mmap: file mapping vs anonymous mapping',   vb: '0 0 640 220', frames: mmapViz },
+    pingpong:  { title: 'Ping-pong with two semaphores',             vb: '0 0 640 240', frames: pingpong },
+    keys:      { title: 'Secret key vs public key',                  vb: '0 0 640 210', frames: keysViz },
+    sign:      { title: 'Hash and digital signature',                vb: '0 0 640 210', frames: signViz },
   };
 
   // ── Morphing renderer ──────────────────────────────────────────

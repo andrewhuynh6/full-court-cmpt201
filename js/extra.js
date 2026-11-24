@@ -40,6 +40,7 @@ fread(buf, 1, 100, f);  fprintf(f, "x");  fclose(f);`),
       mistake: 'Mixing the two: <code>fread</code> needs a <code>FILE *</code>, while <code>read</code> needs an int descriptor.',
       check: { q: 'Which of these is a buffered I/O function?', opts: ['fwrite', 'write', 'lseek', 'open'], ans: 0, exp: 'fwrite belongs to stdio and writes into a user-space buffer. write, lseek and open are system calls.' } },
     { title: 'Why buffer? Fewer system calls',
+      viz: 'bufio',
       html: `<p>A system call switches into the kernel, which is slow compared to copying a byte in memory. Buffering collects small writes and sends one big write.</p>`
         + codeBlock(`for (int i = 0; i < 10000; i++)
     fputc('x', f);      // buffered: ~3 write() calls
@@ -70,6 +71,7 @@ lseek(fd, 0, SEEK_SET);     // back to the start`),
       mistake: 'Forgetting that a read moves the offset, then reading the same bytes twice by accident.',
       check: { q: 'After <code>read(fd, buf, 10)</code> twice in a row, where does the next read begin?', opts: ['Byte 20', 'Byte 10', 'Byte 0', 'Byte 11'], ans: 0, exp: 'Each read advanced the offset by 10, so the next read starts at byte 20.' } },
     { title: 'Why the offset belongs to the open file',
+      viz: 'offset',
       html: `<p>The offset is stored in the <strong>open file description</strong>: the kernel object created by <code>open</code>. It is not stored in the file (many openers) or in the descriptor number.</p><ul><li>Two separate <code>open</code> calls get <strong>separate</strong> offsets, so independent readers never disturb each other.</li><li><code>dup</code> and <code>fork</code> <strong>share</strong> one description, so they share one offset. A child continues where its parent stopped.</li></ul>`
         + codeBlock(`int a = open("f", O_RDONLY);
 int b = open("f", O_RDONLY);   // separate offsets
@@ -130,6 +132,7 @@ read(cfd, buf, sizeof buf);`),
       mistake: 'Making a thread per client for 100000 idle connections. Memory and context switches pile up.',
       check: { q: 'Which approach serves many clients from a single thread?', opts: ['I/O multiplexing with epoll', 'fork per client', 'A thread per client', 'Calling accept in a loop'], ans: 0, exp: 'epoll lets one thread wait on many sockets and react only to the ready ones.' } },
     { title: 'What epoll is for',
+      viz: 'epoll',
       html: `<p><code>epoll</code> is a Linux API to monitor many file descriptors and be told which are <strong>ready</strong> (data to read, room to write). It uses three calls:</p>`
         + codeBlock(`int ep = epoll_create1(0);                          // make the epoll instance
 epoll_ctl(ep, EPOLL_CTL_ADD, fd, &ev);               // watch fd (ADD / MOD / DEL)
@@ -212,6 +215,7 @@ p[0] = 'X';          // changes the first byte of data.bin`),
       mistake: 'Using <code>MAP_PRIVATE</code> and expecting the file to change. Private writes are copy-on-write and never reach the file.',
       check: { q: 'A process maps a file with <code>MAP_SHARED</code> and writes to the mapped memory. What happens?', opts: ['The change reaches the file', 'The write is lost', 'The kernel raises an error', 'Only a private copy changes'], ans: 0, exp: 'MAP_SHARED file mappings write through to the underlying file.' } },
     { title: 'Anonymous mapping',
+      viz: 'mmap',
       html: `<p>An <strong>anonymous mapping</strong> has no file. Pass <code>MAP_ANONYMOUS</code> and <code>fd = -1</code>. The memory starts as all zeros.</p>`
         + codeBlock(`int *p = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
               MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -281,6 +285,7 @@ T2: store x = 0 + 12     // overwrites: x == 12`),
       mistake: 'Answering 0 or 6. Each thread either adds its 12 on top of the real value or overwrites with 12.',
       check: { q: 'x starts at 0. Two threads each run <code>x += 3 * 4</code> with no lock. Which set lists all possible final values?', opts: ['12 and 24', '24 only', '0, 12 and 24', '12 only'], ans: 0, exp: 'Serial execution gives 24. A lost update gives 12. No interleaving can produce 0.' } },
     { title: 'Strict alternation with two semaphores',
+      viz: 'pingpong',
       html: `<p>To make "ping" and "pong" alternate, with ping always first, give each thread its own semaphore. A thread <strong>waits</strong> on its own and <strong>posts</strong> the other.</p>`
         + codeBlock(`sem_t sem_ping, sem_pong;
 sem_init(&sem_ping, 0, 1);   // ping may go first
@@ -353,6 +358,7 @@ defLesson('ch6', {
       mistake: 'Thinking encryption alone gives integrity. A flipped bit in ciphertext may go unnoticed without a MAC or signature.',
       check: { q: 'Which goal does a digital signature mainly provide?', opts: ['Integrity', 'Availability', 'Confidentiality', 'Anonymity'], ans: 0, exp: 'A signature lets you detect any modification. It does not hide the data.' } },
     { title: 'Secret-key vs public-key cryptography',
+      viz: 'keys',
       html: `<table class="mini"><tr><th></th><th>Secret key (symmetric)</th><th>Public key (asymmetric)</th></tr><tr><td>Keys</td><td>One shared key</td><td>Public + private pair</td></tr><tr><td>Speed</td><td>Fast</td><td>Slower</td></tr><tr><td>Main problem</td><td>Sharing the key safely</td><td>Trusting that a public key is really theirs</td></tr><tr><td>Example</td><td>AES</td><td>RSA</td></tr></table>`,
       why: 'Real systems combine both: public-key to agree on a secret key, then fast symmetric encryption for the data.',
       mistake: 'Mixing up who uses which key: anyone may encrypt with your public key, but only you decrypt with the private key.',
@@ -400,6 +406,7 @@ defLesson('ch6', {
       mistake: 'Mixing up the two. Weak starts from a given x; strong lets the attacker pick both inputs.',
       check: { q: 'What does strong collision resistance mean?', opts: ['It is infeasible to find any two different inputs with one hash', 'No two inputs can ever share the same hash value at all', 'Given x, you cannot find another input with the same hash', 'The hash cannot be computed quickly by anyone, ever'], ans: 0, exp: 'Strong resistance covers every pair the attacker could choose, not just a pair involving a fixed x.' } },
     { title: 'Digital signatures',
+      viz: 'sign',
       html: `<p>To <strong>sign</strong>, hash the message and encrypt the digest with your <strong>private</strong> key. To <strong>verify</strong>, decrypt the signature with the <strong>public</strong> key and compare it to a fresh hash of the message you received.</p>`
         + codeBlock(`sign:    sig = Sign(private_key, H(message))
 verify:  Verify(public_key, message, sig) == true`),
