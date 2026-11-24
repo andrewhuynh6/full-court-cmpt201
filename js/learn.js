@@ -127,6 +127,7 @@ function renderChapterList() {
         <h2>LEARN</h2>
         <p>Select a chapter to begin your training</p>
       </div>
+      ${reviewBannerHtml()}
       ${CHAPTERS.map(ch => {
         const done = isChapterComplete(AppState, ch);
         const doneLessons = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
@@ -168,7 +169,7 @@ function showChapter(chId) {
         const ldone = lrn && prc && qz;
         return `<div class="lesson-item${ldone?' done':''}" onclick="showLesson('${lesson.id}')">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--dim);min-width:28px">${String(i+1).padStart(2,'0')}</div>
-          <div class="lesson-title">${lesson.title}</div>
+          <div class="lesson-title">${lesson.title}${reviewCountForLesson(lesson.id) ? ` <span class="tag">${reviewCountForLesson(lesson.id)} to review</span>` : ''}</div>
           <div class="lesson-stages">
             <div class="stage-dot${lrn?' done':''}" title="Learn">L</div>
             <div class="stage-dot${prc?' done':''}" title="Practice">P</div>
@@ -397,7 +398,7 @@ function renderMCQQuestion(sc, mode) {
   sc.innerHTML = `<div class="mcq-wrap">
     <div class="mcq-score-bar">
       <div><div class="mcq-score-num">${mcq.score}/${mcq.questions.length}</div><div class="mcq-score-lbl">Score</div></div>
-      <div class="mcq-topic">${mode === 'quiz' ? 'QUIZ' : 'PRACTICE'}</div>
+      <div class="mcq-topic">${mode === 'quiz' ? 'QUIZ' : mode === 'review' ? 'REVIEW' : 'PRACTICE'}</div>
       <div class="mcq-qnum">${mcq.q+1}/${mcq.questions.length}</div>
     </div>
     <div class="mcq-question">
@@ -413,6 +414,7 @@ function renderMCQQuestion(sc, mode) {
   renderQuestion(document.getElementById('q-host'), q, ok => {
     mcq.answered = true;
     if (ok) mcq.score++;
+    recordReview(q, ok);
     document.getElementById('mcq-next').disabled = false;
   });
 }
@@ -423,6 +425,8 @@ function nextMCQ(mode) {
     mcq.answered = false;
     const sc = document.getElementById('stage-content');
     renderMCQQuestion(sc, mode);
+  } else if (mode === 'review') {
+    finishReview();
   } else {
     mcq.done = true;
     const sc = document.getElementById('stage-content');

@@ -229,6 +229,7 @@ function renderDashboard() {
         </div>
 
         <div class="db-stack">
+          ${reviewPanelHtml()}
           <!-- Next Reward -->
           <div class="panel">
             <div class="panel-title">${icon('gift',20)} Next Reward</div>

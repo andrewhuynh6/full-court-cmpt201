@@ -502,6 +502,13 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
 .order-chip.wrg { border-color: #FF6B6B; }
 .order-check { margin-top: 4px; }
 
+.review-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.review-row:last-of-type { border-bottom: none; }
+.review-name { grid-column: 1 / -1; min-width: 0; font-size: 15px; font-weight: 600; color: var(--white); }
+.review-row .tag { justify-self: start; }
+.review-sub { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+.review-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 18px; background: rgba(185,28,28,.07); border: 1px solid var(--bad); border-radius: var(--r); }
+
 /* ── VISUALIZATIONS ──────────────────────────────────────────── */
 
 .viz { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin: 18px 0 8px; }
