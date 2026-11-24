@@ -561,6 +561,12 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
 .vz-line.a { stroke: var(--ball); }
 .vz-line.b { stroke: var(--bad); }
 .vz-line.ok { stroke: var(--ok); }
+.vz-ball { fill: var(--ball); stroke: var(--white); stroke-width: 2; }
+.vz-in { animation: vzIn .38s ease both; }
+.vz-out { animation: vzOut .26s ease both; pointer-events: none; }
+@keyframes vzIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vzOut { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .vz-in, .vz-out { animation: none; } }
 .vz-mk-n { fill: var(--dim); } .vz-mk-a { fill: var(--ball); } .vz-mk-b { fill: var(--bad); } .vz-mk-ok { fill: var(--ok); }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */

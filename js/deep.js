@@ -11,7 +11,7 @@ l1_1: {
   notes: [
     { why: 'Almost every segfault in this course is really a pointer bug, so this is the foundation for everything else.', mistake: 'Mixing up the pointer with what it points to. p holds an address; <code>*p</code> is the value.' },
     { why: 'Passing <code>&amp;x</code> to a function is how C lets a function change your variable.', mistake: 'Writing <code>int *p = 5;</code>. A number is not an address; it compiles with a warning and crashes when used.' },
-    { why: 'Pointer arithmetic is how C walks arrays, strings and buffers.', mistake: 'Adding bytes by hand. On an <code>int *</code>, <code>p + 4</code> moves 16 bytes, not 4.',
+    { viz: 'ptrarith', why: 'Pointer arithmetic is how C walks arrays, strings and buffers.', mistake: 'Adding bytes by hand. On an <code>int *</code>, <code>p + 4</code> moves 16 bytes, not 4.',
       trace: 'a = {10, 20, 30} &nbsp;→&nbsp; <code>p = a</code> points at 10 &nbsp;→&nbsp; <code>p++</code> points at 20 &nbsp;→&nbsp; <code>*p</code> is 20.' },
     { why: 'Every array you pass to a function arrives as a pointer.', mistake: 'Using <code>sizeof(arr)</code> inside a function. It gives the pointer size (8), not the array size.' },
     { why: '<code>char **argv</code> in main and callbacks such as qsort\'s compare function both rely on these.', mistake: 'Dropping the parentheses: <code>int *op(int, int)</code> declares a function returning <code>int *</code>, not a function pointer.' },
@@ -148,7 +148,7 @@ l2_4: {
     { why: 'Producer-consumer is the pattern behind queues, thread pools and print spoolers.', mistake: 'Swapping the two waits so each side waits for the other.',
       trace: 'empty=4, full=0 &nbsp;→&nbsp; produce: empty=3, full=1 &nbsp;→&nbsp; ... buffer full: empty=0 &nbsp;→&nbsp; producer sleeps until a consumer posts.' },
     { why: 'Counting slots and protecting the buffer are two separate jobs; real code needs both.', mistake: 'Taking the mutex before <code>sem_wait</code>. You sleep holding the lock and the other side can never post.' },
-    { why: 'Condition variables let threads wait for something to become true without burning CPU in a loop.', mistake: 'Calling cond_wait without holding the mutex, or signaling before the condition is actually set.' },
+    { viz: 'condvar', why: 'Condition variables let threads wait for something to become true without burning CPU in a loop.', mistake: 'Calling cond_wait without holding the mutex, or signaling before the condition is actually set.' },
   ],
   extra: [
     { at: 4, step: {
@@ -170,7 +170,7 @@ l3_1: {
     { why: 'Pipe and network reads often return fewer bytes than requested, so correct programs loop.', mistake: 'Treating the buffer as a C string without adding the terminating zero after read.',
       trace: 'Ask for 100, get 37 &nbsp;→&nbsp; use those 37 &nbsp;→&nbsp; read again &nbsp;→&nbsp; 0 means finished.' },
     { why: 'Wrong flags silently destroy data (<code>O_TRUNC</code>) or fail to create files (missing <code>O_CREAT</code>).', mistake: 'Passing <code>O_CREAT</code> without the mode argument. The permissions come from garbage.' },
-    { why: 'Shell redirection and pipelines are built from dup2.', mistake: 'Leaving the extra descriptor open after dup2, which keeps a file or pipe open longer than intended.' },
+    { viz: 'fdtable', why: 'Shell redirection and pipelines are built from dup2.', mistake: 'Leaving the extra descriptor open after dup2, which keeps a file or pipe open longer than intended.' },
   ],
   extra: [
     { at: 5, step: {
@@ -193,7 +193,7 @@ l3_2: {
     { why: 'The split between names and inodes explains hard links, rename, and why deleting an open file still works.', mistake: 'Thinking the name is part of the file.' },
     { why: '<code>ls -l</code>, <code>du</code> and backup tools all read these same fields.', mistake: 'Using <code>stat</code> on a symlink and expecting link info. stat follows the link; <code>lstat</code> does not.' },
     { why: 'Permission errors (EACCES) are among the most common runtime failures.', mistake: 'Reading 755 as one number. It is three digits: owner, group, others.' },
-    { why: 'Hard or symbolic changes what happens when files move or are deleted.', mistake: 'Trying to hard-link a directory or across filesystems. Both are not allowed.',
+    { viz: 'links', why: 'Hard or symbolic changes what happens when files move or are deleted.', mistake: 'Trying to hard-link a directory or across filesystems. Both are not allowed.',
       trace: '<code>ln a b</code>: inode 77 has names a, b (nlink 2) &nbsp;→&nbsp; <code>rm a</code>: only b remains (nlink 1) &nbsp;→&nbsp; data kept.' },
     { why: 'Path lookup walks directories one component at a time; this explains the x bit on directories.', mistake: 'Forgetting that deleting a file needs write permission on the directory, not on the file.' },
   ],
@@ -213,7 +213,7 @@ l4_1: {
   recap: ['A socket is a file descriptor.', 'Server: socket, bind, listen, accept. Client: socket, connect.', '<code>accept</code> returns a new fd per client; the listener stays open.', 'TCP is a byte stream: no message boundaries.', '<code>SOCK_STREAM</code> is TCP, <code>SOCK_DGRAM</code> is UDP.'],
   notes: [
     { why: 'Because sockets are file descriptors, you already know how to read, write and close them.', mistake: 'Expecting one write on one side to equal one read on the other. TCP is a stream.' },
-    { why: 'This order is the exam question and every server\'s skeleton.', mistake: 'Skipping bind. The OS picks a random port and clients cannot find you.',
+    { viz: 'tcpflow', why: 'This order is the exam question and every server\'s skeleton.', mistake: 'Skipping bind. The OS picks a random port and clients cannot find you.',
       trace: 'socket gives fd 3 &nbsp;→&nbsp; bind(3, port 8080) &nbsp;→&nbsp; listen(3) &nbsp;→&nbsp; accept(3) returns fd 4 for client #1 while fd 3 keeps listening.' },
     { why: 'Separating the listener from per-client sockets is what lets one server talk to many clients.', mistake: 'Closing the listening socket after the first accept. No more clients can connect.' },
     { why: 'The client mirrors the server, so once you know one you know both.', mistake: 'Using the right host but the wrong port or byte order in connect().' },
@@ -241,7 +241,7 @@ l4_2: {
     { why: 'Byte-order mistakes show up as ports and addresses that look right in code but fail on the wire.', mistake: 'Calling <code>htons</code> on a value that is already in network order, which swaps it back.',
       trace: 'Port 8080 = 0x1F90 &nbsp;→&nbsp; on the wire: bytes 1F 90 (big-endian) &nbsp;→&nbsp; a little-endian CPU stores 90 1F in memory.' },
     { why: 'These few lines are boilerplate you will write in every networking assignment.', mistake: 'Not zeroing the struct first. Stray bytes in the padding can make bind or connect fail.' },
-    { why: 'A server that handles one client at a time is frozen by one slow client.', mistake: 'Testing with a single client, so the blocking problem never shows.' },
+    { viz: 'clients', why: 'A server that handles one client at a time is frozen by one slow client.', mistake: 'Testing with a single client, so the blocking problem never shows.' },
     { why: 'fork gives each client its own process: simple and isolated, a little heavy.', mistake: 'Leaving the listening fd open in the child, or the client fd open in the parent.' },
     { why: 'select lets one process watch hundreds of sockets with no extra processes.', mistake: 'Not resetting the fd_set every loop, or passing the wrong max fd.' },
   ],
