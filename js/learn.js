@@ -17,9 +17,9 @@ function renderChapterList() {
   const v = document.getElementById('view-learn');
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">🏋️ TRAINING ROOM</div>
+      <div class="topbar-title">${icon('dumbbell',22)} TRAINING ROOM</div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="page-hdr">
         <h2>LEARN</h2>
         <p>Select a chapter to begin your training</p>
@@ -30,7 +30,7 @@ function renderChapterList() {
         return `<div class="chapter-item${done?' done':''}" onclick="showChapter('${ch.id}')">
           <div class="chapter-num">${ch.num}</div>
           <div class="chapter-info">
-            <div class="chapter-title">${ch.icon} ${ch.title}</div>
+            <div class="chapter-title">${icon(ch.icon,20)} ${ch.title}</div>
             <div class="chapter-sub">${ch.subtitle}</div>
             <div class="chapter-prog">${doneLessons}/${ch.lessons.length} lessons · Reward: ${ch.packReward}</div>
           </div>
@@ -48,12 +48,12 @@ function showChapter(chId) {
   const done = isChapterComplete(AppState, currentChapter);
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">${currentChapter.icon} ${currentChapter.title}</div>
+      <div class="topbar-title">${icon(currentChapter.icon,22)} ${currentChapter.title}</div>
       <div class="topbar-actions">
         <button class="btn btn-secondary btn-sm" onclick="renderChapterList()">← Back</button>
       </div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="page-hdr">
         <h2>${currentChapter.title.toUpperCase()}</h2>
         <p>${currentChapter.subtitle} · ${currentChapter.packReward} on completion</p>
@@ -109,7 +109,7 @@ function renderLesson() {
         <button class="btn btn-secondary btn-sm" onclick="showChapter('${currentChapter.id}')">← Back</button>
       </div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="stage-tabs">
         <button class="stage-tab${currentStage==='learn'?' active':''}${lrn?' done':''}" onclick="switchStage('learn')">${lrn?'✓ ':''}Learn</button>
         <button class="stage-tab${currentStage==='practice'?' active':''}${prc?' done':''}" onclick="switchStage('practice')" ${!lrn&&!prc?'disabled':''}>${prc?'✓ ':''}Practice</button>
@@ -142,7 +142,7 @@ function renderLearnStage(sc) {
   const done = isLearnDone(AppState, id);
   sc.innerHTML = `
     <div class="learn-content">
-      ${currentLesson.learn}
+      ${expandIcons(currentLesson.learn)}
       <div style="margin-top:24px">
         ${done
           ? `<button class="btn btn-secondary btn-lg" onclick="switchStage('practice')">Go to Practice →</button>`
@@ -271,7 +271,7 @@ function nextMCQ(mode) {
 function renderMCQFinal(sc, mode) {
   const pct  = Math.round(mcq.score / mcq.questions.length * 100);
   const grade = pct===100?'A':pct>=80?'B':pct>=60?'C':'D';
-  const msg   = pct===100?'NOTHING BUT NET 🏀':pct>=80?'GREAT SHOT!':pct>=60?'KEEP TRAINING!':'BACK TO THE FILM ROOM';
+  const msg   = pct===100?'NOTHING BUT NET':pct>=80?'GREAT SHOT!':pct>=60?'KEEP TRAINING!':'BACK TO THE FILM ROOM';
   const xpEarned = mode==='quiz' ? Math.round(XP_REWARDS.quiz*(mcq.score/mcq.questions.length)) : XP_REWARDS.practice;
   sc.innerHTML = `<div class="mcq-wrap">
     <div class="final-screen">
@@ -319,9 +319,9 @@ function showGameDay(chId) {
 function renderGameDayLocked() {
   const v = document.getElementById('view-gameday');
   v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY</div></div>
-  <div style="padding:24px">
+  <div class="page-wrap">
     <div class="empty-state">
-      <div class="empty-icon">🔒</div>
+      <div class="empty-icon">${icon('lock',48)}</div>
       <h3>LOCKED</h3>
       <p>Complete a full chapter to unlock Game Day.</p>
       <button class="btn btn-primary" style="margin-top:16px" onclick="navigate('learn')">Go to Training</button>
@@ -332,7 +332,7 @@ function renderGameDayLocked() {
         return `<div class="chapter-item${done?'':' locked'}" onclick="${done?`showGameDay('${ch.id}')`:''}">
           <div class="chapter-num">${ch.num}</div>
           <div class="chapter-info">
-            <div class="chapter-title">${ch.icon} ${ch.title} — Game Day</div>
+            <div class="chapter-title">${icon(ch.icon,20)} ${ch.title} — Game Day</div>
             <div class="chapter-sub">${ch.subtitle}</div>
           </div>
           ${done ? '<span class="tag ok">AVAILABLE</span>' : '<span class="tag" style="color:var(--dim)">LOCKED</span>'}
@@ -349,7 +349,7 @@ function renderGameDayQuestion() {
   const ch = CHAPTERS.find(c => c.id === gameState.chapterId);
   const letters = ['A','B','C','D'];
   v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY — ${ch?.title||''}</div></div>
-  <div style="padding:24px">
+  <div class="page-wrap">
     <div class="scoreboard">
       <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts">${gameState.pts}</div><div class="sb-info">Points</div></div>
       <div class="sb-sep">VS</div>
@@ -384,11 +384,11 @@ function answerGameDay(i) {
   if (i === q.ans) {
     opts[i].classList.add('cor');
     gameState.pts += Math.floor(Math.random()*3+2)*2; // 2-pt or 3-pt
-    if (fb) fb.innerHTML = `<div class="mcq-fb c">🏀 SCORED! +${2} pts — ${q.exp}</div>`;
+    if (fb) fb.innerHTML = `<div class="mcq-fb c">${icon('dribbble',18)} SCORED! +${2} pts — ${q.exp}</div>`;
   } else {
     opts[i].classList.add('wrg');
     opts[q.ans].classList.add('show');
-    if (fb) fb.innerHTML = `<div class="mcq-fb w">❌ MISSED SHOT — ${q.exp}</div>`;
+    if (fb) fb.innerHTML = `<div class="mcq-fb w">${icon('circle-x',18)} MISSED SHOT — ${q.exp}</div>`;
   }
   const nb = document.getElementById('gd-next');
   if (nb) nb.disabled = false;
@@ -419,10 +419,10 @@ function renderGameDayResult() {
   const pct  = Math.round(gameState.pts / (gameState.pts + gameState.opp) * 100);
   const xp   = Math.round(gameState.pts * 1.5);
   v.innerHTML = `<div class="topbar"><div class="topbar-title">FINAL BUZZER</div></div>
-  <div style="padding:24px">
+  <div class="page-wrap">
     <div class="scoreboard">
       <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts" style="color:${win?'var(--ok)':'var(--bad)'}">${gameState.pts}</div></div>
-      <div class="sb-sep">${win?'🏆':'😤'}</div>
+      <div class="sb-sep">${win?icon('trophy',36):icon('frown',36)}</div>
       <div class="sb-team"><div class="sb-name">CPU</div><div class="sb-pts">${gameState.opp}</div></div>
     </div>
     <div class="final-screen">

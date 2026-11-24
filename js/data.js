@@ -95,7 +95,7 @@ function genPackCard(packType) {
 const CHAPTERS = [
 {
   id:'ch1', num:'01', title:'Training Camp', subtitle:'C Fundamentals',
-  icon:'🏋️', color:'#CD7F32', packReward:'Bronze Pack',
+  icon:'dumbbell', color:'#CD7F32', packReward:'Bronze Pack',
   lessons:[
   {
     id:'l1_1', title:'Pointers & Memory',
@@ -131,7 +131,7 @@ p++;                   // now points to arr[1]</div>
 int *p  = &amp;x;
 int **pp = &amp;p;   // pointer to pointer
 printf("%d", **pp); // 5 — double dereference</div>
-<div class="tip-box">⚠️ <strong>Common Bugs:</strong> (1) Dereferencing NULL — always segfaults. (2) Using an uninitialized pointer — reads garbage address. (3) Returning a pointer to a local variable — the stack frame is gone after the function returns. Always initialize pointers to NULL if you don't have an address yet.</div>
+<div class="tip-box">{{i:triangle-alert}}<strong>Common Bugs:</strong> (1) Dereferencing NULL — always segfaults. (2) Using an uninitialized pointer — reads garbage address. (3) Returning a pointer to a local variable — the stack frame is gone after the function returns. Always initialize pointers to NULL if you don't have an address yet.</div>
 <h3>Function Pointers</h3>
 <p>Functions live in memory too. A function pointer stores a function's address, enabling callbacks and dispatch tables.</p>
 <div class="code-block">int add(int a, int b) { return a + b; }
@@ -200,7 +200,7 @@ p = NULL;  // safe: free(NULL) is a no-op</div>
 valgrind --leak-check=full ./prog
 # Output: "definitely lost: 40 bytes in 1 blocks"
 # → you malloc'd 40 bytes and never freed them</div>
-<div class="tip-box">💡 <strong>Golden Rule:</strong> Every malloc() needs exactly one free(). Design your code so it's clear which function "owns" each allocation and is responsible for freeing it.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Golden Rule:</strong> Every malloc() needs exactly one free(). Design your code so it's clear which function "owns" each allocation and is responsible for freeing it.</div>`,
     practice:[
       {q:"Which function allocates zeroed memory?",opts:["malloc","calloc","realloc","alloc"],ans:1,exp:"calloc(n, size) allocates n×size bytes and zeros them. malloc does not zero memory."},
       {q:"What must you always do after malloc?",opts:["Call realloc","Call free when done","Call calloc","Re-declare the pointer"],ans:1,exp:"Every malloc must have a matching free to avoid memory leaks."},
@@ -218,7 +218,7 @@ valgrind --leak-check=full ./prog
 },
 {
   id:'ch2', num:'02', title:'Season Opener', subtitle:'Processes & Threads',
-  icon:'⚙️', color:'#C0C0C0', packReward:'Silver Pack',
+  icon:'cpu', color:'#C0C0C0', packReward:'Silver Pack',
   lessons:[
   {
     id:'l2_1', title:'Processes',
@@ -262,7 +262,7 @@ perror("execv"); exit(1);</div>
 waitpid(-1, &amp;status, 0);       // wait for any child
 waitpid(pid, &amp;status, WNOHANG); // non-blocking check
 // WIFEXITED(s), WEXITSTATUS(s), WIFSIGNALED(s), WTERMSIG(s)</div>
-<div class="tip-box">💡 <strong>Key Rule:</strong> fork() copies the entire address space using copy-on-write (COW) — physical pages are shared until one process writes, then a private copy is made. This makes fork() cheap even for large processes.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Key Rule:</strong> fork() copies the entire address space using copy-on-write (COW) — physical pages are shared until one process writes, then a private copy is made. This makes fork() cheap even for large processes.</div>`,
     practice:[
       {q:"What does fork() return to the parent?",opts:["0","Child's PID","-1","1"],ans:1,exp:"fork() returns the child's PID to the parent and 0 to the child. -1 means error."},
       {q:"What is a zombie process?",opts:["A process that loops forever","A process that has exited but hasn't been wait()ed","A process without a parent","A process consuming high CPU"],ans:1,exp:"A zombie is a terminated process whose parent hasn't called wait() yet. Its entry stays in the process table."},
@@ -330,7 +330,7 @@ void *increment(void *arg) {
     return NULL;
 }
 // Two threads → counter might be 150000 instead of 200000!</div>
-<div class="tip-box">⚠️ <strong>Thread safety rules:</strong> (1) Local variables are always safe — each thread has its own stack. (2) Read-only global data is safe. (3) Any write to shared data needs synchronization. (4) A detached thread (pthread_detach) cannot be joined and cleans up automatically.</div>`,
+<div class="tip-box">{{i:triangle-alert}}<strong>Thread safety rules:</strong> (1) Local variables are always safe — each thread has its own stack. (2) Read-only global data is safe. (3) Any write to shared data needs synchronization. (4) A detached thread (pthread_detach) cannot be joined and cleans up automatically.</div>`,
     practice:[
       {q:"What do threads share within a process?",opts:["Stack and registers","Heap and global variables","Program counter","Thread ID"],ans:1,exp:"Threads share heap, globals, file descriptors, and code. Each has its own stack, registers, and PC."},
       {q:"pthread_join() does what?",opts:["Creates a thread","Kills a thread","Blocks caller until the thread finishes","Detaches a thread"],ans:2,exp:"pthread_join blocks the calling thread until the specified thread terminates."},
@@ -403,7 +403,7 @@ pthread_rwlock_unlock(&amp;rwl);
 pthread_rwlock_wrlock(&amp;rwl);  // exclusive
 // ... modify shared data ...
 pthread_rwlock_unlock(&amp;rwl);</div>
-<div class="tip-box">💡 <strong>Best practices:</strong> Keep critical sections as short as possible. Never call a blocking function (sleep, I/O) while holding a mutex. Set to NULL after destroy. Prefer PTHREAD_MUTEX_INITIALIZER for globals.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Best practices:</strong> Keep critical sections as short as possible. Never call a blocking function (sleep, I/O) while holding a mutex. Set to NULL after destroy. Prefer PTHREAD_MUTEX_INITIALIZER for globals.</div>`,
     practice:[
       {q:"What does pthread_mutex_lock() do when the mutex is locked?",opts:["Returns -1","Crashes","Blocks until available","Steals the lock"],ans:2,exp:"mutex_lock blocks the calling thread until the mutex is released."},
       {q:"What is a deadlock?",opts:["A slow thread","Circular wait where no thread can proceed","A thread holding a lock too long","A mutex not initialized"],ans:1,exp:"Deadlock is a circular wait: each thread holds a lock and waits for another lock held by another thread."},
@@ -469,7 +469,7 @@ ready = 1;
 pthread_cond_signal(&amp;cond);     // wake ONE waiter
 // pthread_cond_broadcast(&amp;cond); // wake ALL waiters
 pthread_mutex_unlock(&amp;mtx);</div>
-<div class="tip-box">⚠️ <strong>Why while and not if?</strong> Spurious wakeups — a thread can wake from cond_wait even when no one signaled it (POSIX allows this). The while loop re-checks the condition and goes back to sleep if it's still false. This is mandatory.</div>`,
+<div class="tip-box">{{i:triangle-alert}}<strong>Why while and not if?</strong> Spurious wakeups — a thread can wake from cond_wait even when no one signaled it (POSIX allows this). The while loop re-checks the condition and goes back to sleep if it's still false. This is mandatory.</div>`,
     practice:[
       {q:"sem_wait() blocks when the semaphore value is:",opts:["Positive","Negative","Zero","Greater than 1"],ans:2,exp:"sem_wait blocks if the value is 0 and decrements it atomically once > 0."},
       {q:"Why use while() instead of if() with cond_wait?",opts:["Compiler requirement","Handle spurious wakeups","Performance","Mutex must be re-acquired manually"],ans:1,exp:"Spurious wakeups can occur — the while loop re-checks the condition after every wakeup."},
@@ -487,7 +487,7 @@ pthread_mutex_unlock(&amp;mtx);</div>
 },
 {
   id:'ch3', num:'03', title:'Mid-Season', subtitle:'File Systems',
-  icon:'📁', color:'#FFD700', packReward:'Gold Pack',
+  icon:'folder', color:'#FFD700', packReward:'Gold Pack',
   lessons:[
   {
     id:'l3_1', title:'File I/O System Calls',
@@ -541,7 +541,7 @@ fclose(f);
 int logfd = open("out.log", O_WRONLY|O_CREAT|O_TRUNC, 0644);
 dup2(logfd, STDOUT_FILENO);  // stdout now writes to out.log
 close(logfd);</div>
-<div class="tip-box">⚠️ <strong>Always check return values!</strong> read() returns 0 on EOF, -1 on error, and may return fewer bytes than requested on pipes/sockets. Use a loop for complete I/O.</div>`,
+<div class="tip-box">{{i:triangle-alert}}<strong>Always check return values!</strong> read() returns 0 on EOF, -1 on error, and may return fewer bytes than requested on pipes/sockets. Use a loop for complete I/O.</div>`,
     practice:[
       {q:"open() returns what on success?",opts:["The file size","A file pointer (FILE*)","A file descriptor (int)","0"],ans:2,exp:"open() returns a non-negative integer (file descriptor) on success, or -1 on error."},
       {q:"What does read() return at EOF?",opts:["-1","EOF constant","0","Buffer size"],ans:2,exp:"read() returns 0 at end-of-file, positive for bytes read, and -1 on error."},
@@ -603,7 +603,7 @@ struct dirent *entry;
 while ((entry = readdir(dir)) != NULL)
     printf("%s\\n", entry-&gt;d_name);
 closedir(dir);</div>
-<div class="tip-box">💡 <strong>Key fact:</strong> <code>ls -li</code> shows inode numbers in the first column. Two names with the same inode number are hard links to the same file. Data is freed only when link count reaches 0 AND all open file descriptors are closed.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Key fact:</strong> <code>ls -li</code> shows inode numbers in the first column. Two names with the same inode number are hard links to the same file. Data is freed only when link count reaches 0 AND all open file descriptors are closed.</div>`,
     practice:[
       {q:"What does an inode NOT store?",opts:["File size","Permissions","The filename","Timestamps"],ans:2,exp:"Inodes store metadata but NOT the filename. Filenames live in directory entries mapping names to inode numbers."},
       {q:"Two hard links to the same file will have:",opts:["Different inode numbers","The same inode number","Different sizes","Different permissions"],ans:1,exp:"Hard links point to the same inode, so they share the same inode number, size, and permissions."},
@@ -621,7 +621,7 @@ closedir(dir);</div>
 },
 {
   id:'ch4', num:'04', title:'Playoffs', subtitle:'Networking',
-  icon:'🌐', color:'#B9F2FF', packReward:'Gold Pack',
+  icon:'globe', color:'#B9F2FF', packReward:'Gold Pack',
   lessons:[
   {
     id:'l4_1', title:'Sockets & Server Flow',
@@ -672,7 +672,7 @@ close(cfd);</div>
 <li><code>AF_INET + SOCK_DGRAM</code> — UDP/IPv4: fast, no guarantees, no connection</li>
 <li><code>AF_UNIX</code> — Unix domain: local IPC only, faster than TCP loopback</li>
 </ul>
-<div class="tip-box">💡 <strong>Key insight:</strong> accept() creates a NEW socket fd for each client — the original listening socket stays open to accept more connections. Always setsockopt SO_REUSEADDR on server sockets to avoid "Address already in use" errors during development.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Key insight:</strong> accept() creates a NEW socket fd for each client — the original listening socket stays open to accept more connections. Always setsockopt SO_REUSEADDR on server sockets to avoid "Address already in use" errors during development.</div>`,
     practice:[
       {q:"What does accept() return?",opts:["The listening fd","A new fd for the client","The client's IP","Number of connections"],ans:1,exp:"accept() returns a NEW socket file descriptor specifically for communicating with the connected client."},
       {q:"SOCK_STREAM provides:",opts:["Datagrams","Reliable, ordered, connection-based communication","Broadcast","Raw packets"],ans:1,exp:"SOCK_STREAM is TCP-like: reliable, ordered, with error correction."},
@@ -737,7 +737,7 @@ while (1) {
         }
     }
 }</div>
-<div class="tip-box">⚠️ <strong>select() limits:</strong> Can only monitor up to FD_SETSIZE (1024) fds. For large-scale servers use poll() (no limit) or epoll (Linux, O(1) scaling). The fd_set must be re-copied every iteration because select() destroys it.</div>`,
+<div class="tip-box">{{i:triangle-alert}}<strong>select() limits:</strong> Can only monitor up to FD_SETSIZE (1024) fds. For large-scale servers use poll() (no limit) or epoll (Linux, O(1) scaling). The fd_set must be re-copied every iteration because select() destroys it.</div>`,
     practice:[
       {q:"htons() converts:",opts:["Host-to-network short (16-bit port)","Network-to-host short","Host-to-network long","Decimal to hex"],ans:0,exp:"htons converts a 16-bit value from host byte order to network byte order (big-endian)."},
       {q:"Why copy master_fds before select()?",opts:["select() doesn't work otherwise","select() modifies the fd_set, clearing unready fds","Stack overflow","Compiler requirement"],ans:1,exp:"select() MODIFIES the fd_set — it clears bits for fds that aren't ready. Keep master_fds as the full watch list."},
@@ -755,7 +755,7 @@ while (1) {
 },
 {
   id:'ch5', num:'05', title:'Championship', subtitle:'IPC',
-  icon:'🏆', color:'#9B59B6', packReward:'Diamond Premium',
+  icon:'trophy', color:'#9B59B6', packReward:'Diamond Premium',
   lessons:[
   {
     id:'l5_1', title:'Pipes & FIFOs',
@@ -809,7 +809,7 @@ char buf[64];
 read(fd, buf, sizeof(buf));
 close(fd);
 unlink("/tmp/my.fifo");  // clean up</div>
-<div class="tip-box">💡 <strong>Pipe capacity:</strong> On Linux, the pipe buffer is 64 KB. Writes ≤ PIPE_BUF (4 KB) are atomic. write() blocks when the buffer is full; read() blocks when it's empty.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Pipe capacity:</strong> On Linux, the pipe buffer is 64 KB. Writes ≤ PIPE_BUF (4 KB) are atomic. write() blocks when the buffer is full; read() blocks when it's empty.</div>`,
     practice:[
       {q:"After pipe(fd), fd[0] is used for:",opts:["Writing","Reading","Both","Closing"],ans:1,exp:"fd[0] is the read end, fd[1] is the write end. Data flows fd[1] → pipe → fd[0]."},
       {q:"Why close unused pipe ends?",opts:["To save fds","So read() gets EOF when all writers close","Security requirement","Performance"],ans:1,exp:"If parent keeps fd[0] open, the pipe still has a reader after parent closes fd[1], preventing child from seeing EOF."},
@@ -897,7 +897,7 @@ if (fork() == 0) {
 wait(NULL);
 printf("value = %d\\n", *shared);  // prints 1
 munmap(shared, sizeof(int));</div>
-<div class="tip-box">💡 <strong>Compile flag:</strong> On Linux, link with <code>-lrt</code> for POSIX shared memory (<code>shm_open</code>, <code>shm_unlink</code>). On macOS, no extra flag is needed. <code>mmap</code> itself is in libc.</div>`,
+<div class="tip-box">{{i:lightbulb}}<strong>Compile flag:</strong> On Linux, link with <code>-lrt</code> for POSIX shared memory (<code>shm_open</code>, <code>shm_unlink</code>). On macOS, no extra flag is needed. <code>mmap</code> itself is in libc.</div>`,
     practice:[
       {q:"First step to create POSIX shared memory?",opts:["mmap()","ftruncate()","shm_open()","malloc()"],ans:2,exp:"shm_open() creates/opens the named shared memory object and returns a file descriptor."},
       {q:"Why is shared memory fastest IPC?",opts:["Uses the network","Processes access the same physical memory without kernel copies","OS pre-caches it","No fds needed"],ans:1,exp:"Processes map the same physical pages — communicating is just reading/writing memory, no kernel copies."},

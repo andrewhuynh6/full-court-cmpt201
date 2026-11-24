@@ -28,23 +28,23 @@ function buildLayout() {
           <div class="logo-text">FULL COURT</div>
           <div class="logo-sub">CMPT 201</div>
         </div>
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">☀</button>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark" aria-label="Toggle light/dark theme">${icon('moon',18)}</button>
       </div>
       <nav class="sidebar-nav">
-        <div class="nav-section-label">ARENA</div>
-        ${navItem('dashboard','Home','dashboard')}
-        <div class="nav-section-label">TRAINING</div>
-        ${navItem('learn','Learn','learn')}
-        ${navItem('gameday','Game Day','gameday')}
-        <div class="nav-section-label">ROSTER</div>
-        ${navItem('team','My Team','team')}
-        ${navItem('collection','Collection','collection')}
+        <div class="nav-section-label">Arena</div>
+        ${navItem('dashboard','Home','dashboard','house')}
+        <div class="nav-section-label">Training</div>
+        ${navItem('learn','Learn','learn','book-open')}
+        ${navItem('gameday','Game Day','gameday','dribbble','Game')}
+        <div class="nav-section-label">Roster</div>
+        ${navItem('team','My Team','team','users','Team')}
+        ${navItem('collection','Collection','collection','layers','Cards')}
         <div class="nav-item" id="nav-packs" onclick="openPacksIfAny()" style="cursor:pointer">
-          <span>Open Packs</span>
+          <span class="nav-ico">${icon('gift',22)}</span><span class="nav-lbl">Open Packs</span>
           <span class="nav-badge" id="packBadge" style="display:none">0</span>
         </div>
-        <div class="nav-section-label">SEASON</div>
-        ${navItem('season','Season Progress','season')}
+        <div class="nav-section-label">Season</div>
+        ${navItem('season','Season Progress','season','trophy','Season')}
       </nav>
       <div class="sidebar-footer">
         <div class="sidebar-player-name" id="sb-name">Rookie</div>
@@ -64,30 +64,29 @@ function buildLayout() {
   renderDashboard();
 }
 
-function navItem(viewId, label, action) {
+function navItem(viewId, label, action, ico, short) {
   return `<div class="nav-item" id="nav-${viewId}" onclick="navigate('${action}')">
-    <span>${label}</span>
+    <span class="nav-ico">${icon(ico,22)}</span><span class="nav-lbl">${label}</span><span class="nav-short">${short || label}</span>
   </div>`;
 }
 
+// Light is the default theme; dark is applied only when chosen.
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.innerHTML = theme === 'dark' ? icon('sun',18) : icon('moon',18);
+}
+
 function toggleTheme() {
-  const root = document.documentElement;
-  const isLight = root.getAttribute('data-theme') === 'light';
-  const next = isLight ? 'dark' : 'light';
-  root.setAttribute('data-theme', next);
-  document.getElementById('themeToggle').textContent = next === 'light' ? '🌙' : '☀';
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  setTheme(next);
   try { localStorage.setItem('fc_theme', next); } catch(e) {}
 }
 
 function applyTheme() {
-  try {
-    const saved = localStorage.getItem('fc_theme');
-    if (saved) {
-      document.documentElement.setAttribute('data-theme', saved);
-      const btn = document.getElementById('themeToggle');
-      if (btn) btn.textContent = saved === 'light' ? '🌙' : '☀';
-    }
-  } catch(e) {}
+  let saved = 'light';
+  try { saved = localStorage.getItem('fc_theme') || 'light'; } catch(e) {}
+  setTheme(saved === 'dark' ? 'dark' : 'light');
 }
 
 function navigate(view) {
@@ -165,7 +164,7 @@ function renderDashboard() {
       <div class="dashboard-grid">
 
         <!-- Profile -->
-        <div class="panel db-span2">
+        <div class="panel hero db-span3">
           <div class="profile-panel">
             <div class="profile-info" style="flex:1;min-width:0">
               <div class="level">LVL ${p.level} · SEASON 01</div>
@@ -185,37 +184,31 @@ function renderDashboard() {
           </div>
         </div>
 
-        <!-- Next Reward -->
-        <div class="panel">
-          <div class="panel-title">Next Reward</div>
-          ${nextPack
-            ? `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${nextPack.type}</div>
-               <div style="font-size:11px;color:var(--dim)">${nextPack.current} / ${nextPack.target} XP</div>
-               <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" style="width:${nextPack.pct}%"></div></div>`
-            : `<div style="text-align:center;padding:16px;color:var(--ok);font-family:'Bebas Neue',sans-serif;font-size:18px;">ALL MILESTONES HIT 🏆</div>`}
-        </div>
-
         <!-- Team OVR -->
-        <div class="panel">
-          <div class="panel-title">My Team</div>
-          <div class="team-ovr-big">
-            <div class="ovr-badge">${ovr}</div>
-            <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Team Overall</div>
+        <div class="panel db-span3">
+          <div class="panel-title" style="justify-content:space-between">
+            <span>My Team</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigate('team')">Manage Lineup →</button>
           </div>
-          <div class="team-row">
-            ${team.slice(0,5).map(pl => buildCard(pl)).join('')}
+          <div class="team-hero">
+            <div class="team-ovr-big">
+              <div class="ovr-badge">${ovr}</div>
+              <div class="lbl">Team Overall</div>
+            </div>
+            <div class="team-row">
+              ${team.slice(0,5).map(pl => buildCard(pl)).join('')}
+            </div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:14px;width:100%" onclick="navigate('team')">Manage Lineup →</button>
         </div>
 
         <!-- Training Progress -->
         <div class="panel db-span2">
           <div class="panel-title">Training Progress</div>
-          <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px">
+          <div style="display:flex;gap:18px;align-items:center;margin-bottom:20px">
             <div class="stat-pill"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>
-            <div style="flex:1">
-              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-              <div style="font-size:11px;color:var(--dim);margin-top:4px">${prog} / ${total} lessons · ${sp.doneChapters}/${sp.totalChapters} chapters</div>
+            <div style="flex:1;min-width:0">
+              <div class="progress-bar" style="margin-top:0"><div class="progress-fill" style="width:${pct}%"></div></div>
+              <div style="font-size:14px;color:var(--dim);margin-top:8px">${prog} / ${total} lessons · ${sp.doneChapters}/${sp.totalChapters} chapters</div>
             </div>
           </div>
           ${CHAPTERS.slice(0,3).map(ch => {
@@ -225,33 +218,45 @@ function renderDashboard() {
             return `<div class="ch-row">
               <div class="ch-num${done?' done':''}">${ch.num}</div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:12px;color:var(--text);margin-bottom:3px">${ch.title}</div>
-                <div class="progress-bar" style="height:5px"><div class="progress-fill" style="width:${p}%"></div></div>
+                <div class="ch-title">${ch.title}</div>
+                <div class="progress-bar" style="height:8px;margin-top:6px"><div class="progress-fill" style="width:${p}%"></div></div>
               </div>
-              ${done?'<span class="tag ok">✓</span>':'<span style="font-size:11px;color:var(--dim)">'+(p)+'%</span>'}
+              ${done?'<span class="tag ok">✓ Done</span>':'<span class="ch-pct">'+p+'%</span>'}
               <button class="btn btn-secondary btn-sm" onclick="showLesson('${ch.lessons[0].id}')">Train</button>
             </div>`;
           }).join('')}
-          <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="navigate('learn')">View All Chapters →</button>
+          <button class="btn btn-primary" style="margin-top:6px" onclick="navigate('learn')">View All Chapters →</button>
         </div>
 
-        <!-- Collection Preview -->
-        <div class="panel">
-          <div class="panel-title">🃏 Collection</div>
-          <div style="margin-bottom:10px">
-            <div class="stat-num" style="font-size:36px;color:var(--ball)">${AppState.collection.length}</div>
-            <div style="font-size:11px;color:var(--dim);letter-spacing:1px">Cards Collected</div>
+        <div class="db-stack">
+          <!-- Next Reward -->
+          <div class="panel">
+            <div class="panel-title">${icon('gift',20)} Next Reward</div>
+            ${nextPack
+              ? `<div style="font-size:16px;font-weight:600;color:var(--white)">${nextPack.type}</div>
+                 <div style="font-size:14px;color:var(--dim);margin-top:2px">${nextPack.current} / ${nextPack.target} XP</div>
+                 <div class="progress-bar"><div class="progress-fill" style="width:${nextPack.pct}%"></div></div>`
+              : `<div style="text-align:center;padding:12px;color:var(--ok);font-family:'Bebas Neue',sans-serif;font-size:22px;">ALL MILESTONES HIT</div>`}
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-            ${['Bronze','Silver','Gold','Diamond'].map(r => {
-              const count = AppState.collection.filter(c=>c.rarity===r).length;
-              return `<div style="text-align:center;min-width:48px">
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${rarityColor(r)}">${count}</div>
-                <div style="font-size:11px;color:var(--dim)">${r}</div>
-              </div>`;
-            }).join('')}
+
+          <!-- Collection Preview -->
+          <div class="panel">
+            <div class="panel-title">${icon('layers',20)} Collection</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+              <div class="stat-num" style="font-size:44px">${AppState.collection.length}</div>
+              <div style="font-size:14px;color:var(--dim)">cards collected</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+              ${['Bronze','Silver','Gold','Diamond'].map(r => {
+                const count = AppState.collection.filter(c=>c.rarity===r).length;
+                return `<div style="text-align:center;min-width:52px">
+                  <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${rarityColor(r)}">${count}</div>
+                  <div style="font-size:12px;color:var(--dim)">${r}</div>
+                </div>`;
+              }).join('')}
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="navigate('collection')">View Collection →</button>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="navigate('collection')">View Collection →</button>
         </div>
 
       </div>
@@ -278,7 +283,7 @@ function getNextPackProgress() {
 }
 
 function rarityColor(r) {
-  return { Bronze:'#CD7F32', Silver:'#C0C0C0', Gold:'#FFD700', Diamond:'#8B00FF' }[r] || '#888';
+  return { Bronze:'var(--r-bronze)', Silver:'var(--r-silver)', Gold:'var(--r-gold)', Diamond:'var(--r-diamond)' }[r] || 'var(--dim)';
 }
 
 // ── TEAM PAGE ──────────────────────────────────────────────────────
@@ -295,7 +300,7 @@ function renderTeamPage() {
     <div class="topbar">
       <div class="topbar-title">MY TEAM</div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="page-hdr">
         <h2>LINEUP MANAGEMENT</h2>
         <p>Upgrade your starting five with collected cards</p>
@@ -392,7 +397,7 @@ function renderCollection() {
     <div class="topbar">
       <div class="topbar-title">🃏 COLLECTION</div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="page-hdr">
         <h2>PLAYER COLLECTION</h2>
         <p>${all.length} cards · ${AppState.stats.packsOpened} packs opened</p>
@@ -428,18 +433,18 @@ function renderSeason() {
   const v  = document.getElementById('view-season');
   const sp = getSeasonProgress(AppState);
   const stages = [
-    { name:'TRAINING CAMP', desc:'Learn the fundamentals — C, Pointers, Memory', icon:'🏋️', chId:'ch1' },
-    { name:'SEASON OPENER', desc:'Processes, threads, and synchronization', icon:'⚙️', chId:'ch2' },
-    { name:'MID-SEASON', desc:'Master the file system', icon:'📁', chId:'ch3' },
-    { name:'PLAYOFFS', desc:'Networking — sockets and IPC', icon:'🌐', chId:'ch4' },
-    { name:'CHAMPIONSHIP', desc:'Complete IPC mastery — shared memory', icon:'🏆', chId:'ch5' },
+    { name:'TRAINING CAMP', desc:'Learn the fundamentals — C, Pointers, Memory', icon:'dumbbell', chId:'ch1' },
+    { name:'SEASON OPENER', desc:'Processes, threads, and synchronization', icon:'cpu', chId:'ch2' },
+    { name:'MID-SEASON', desc:'Master the file system', icon:'folder', chId:'ch3' },
+    { name:'PLAYOFFS', desc:'Networking — sockets and IPC', icon:'globe', chId:'ch4' },
+    { name:'CHAMPIONSHIP', desc:'Complete IPC mastery — shared memory', icon:'trophy', chId:'ch5' },
   ];
 
   v.innerHTML = `
     <div class="topbar">
       <div class="topbar-title">SEASON PROGRESS</div>
     </div>
-    <div style="padding:24px">
+    <div class="page-wrap">
       <div class="page-hdr">
         <h2>SEASON 01</h2>
         <p>ROAD TO THE CHAMPIONSHIP</p>
@@ -460,13 +465,13 @@ function renderSeason() {
         const doneLs = ch ? ch.lessons.filter(l => isLessonDone(AppState, l.id)).length : 0;
         const isActive = ch && doneLs > 0 && !done;
         return `<div class="season-stage${done?' done':isActive?' active':''}">
-          <div class="stage-icon">${st.icon}</div>
+          <div class="stage-icon">${icon(st.icon,36)}</div>
           <div class="stage-info">
             <div class="stage-name">${st.name}</div>
             <div class="stage-desc">${st.desc}</div>
             ${ch ? `<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
               ${done?'<span class="tag ok">✓ COMPLETE</span>':''}
-              ${!done && ch ? `<span style="font-size:11px;color:var(--dim)">${doneLs}/${ch.lessons.length} lessons</span>`:''}
+              ${!done && ch ? `<span style="font-size:13px;color:var(--dim)">${doneLs}/${ch.lessons.length} lessons</span>`:''}
             </div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">

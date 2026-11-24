@@ -68,9 +68,9 @@ function buildCard(player, size='') {
 }
 
 function buildPackCard(pack, index) {
-  const icons = { 'Bronze Pack':'📦', 'Silver Pack':'⚪', 'Gold Pack':'🏅', 'Diamond Premium':'💎' };
+  const icons = { 'Bronze Pack':icon('package',48), 'Silver Pack':icon('circle',48), 'Gold Pack':icon('medal',48), 'Diamond Premium':icon('gem',48) };
   const cls   = pack.type.split(' ')[0];
-  const icon  = icons[pack.type] || '📦';
+  const icon  = icons[pack.type] || icon('package',48);
   return `<div class="pack-card ${cls}" data-idx="${index}" onclick="openPack(${index})">
     <div class="pack-icon">${icon}</div>
     <div class="pack-title">${pack.type}</div>
@@ -97,7 +97,7 @@ function showPackOverlay(pack, card) {
     overlay.className = 'pack-open-overlay';
     document.body.appendChild(overlay);
   }
-  const icons = { 'Bronze Pack':'📦', 'Silver Pack':'⚪', 'Gold Pack':'🏅', 'Diamond Premium':'💎' };
+  const icons = { 'Bronze Pack':icon('package',48), 'Silver Pack':icon('circle',48), 'Gold Pack':icon('medal',48), 'Diamond Premium':icon('gem',48) };
   const cls   = pack.type.split(' ')[0];
   overlay.innerHTML = `
     <div style="text-align:center;margin-bottom:12px">
@@ -106,7 +106,7 @@ function showPackOverlay(pack, card) {
     </div>
     <div id="packRevealArea">
       <div class="pack-card ${cls}" id="packClickable" onclick="revealCard()" style="cursor:pointer">
-        <div class="pack-icon">${icons[pack.type]||'📦'}</div>
+        <div class="pack-icon">${icons[pack.type]||icon('package',48)}</div>
         <div class="pack-title">${pack.type}</div>
         <div class="pack-count">Click to reveal!</div>
       </div>
