@@ -38,7 +38,7 @@ function playerSVG(pos, num) {
 }
 
 function buildCard(player, size='') {
-  const cls = size === 'lg' ? 'card ' + player.rarity + ' card-lg' : 'card ' + player.rarity;
+  const cls = 'card ' + tierSlug(player.rarity) + (size === 'lg' ? ' card-lg' : '');
   const imgSize = size === 'lg' ? '1040x760' : '260x190';
   let artHTML;
   if (player.nbaId) {

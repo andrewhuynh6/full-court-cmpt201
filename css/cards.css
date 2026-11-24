@@ -14,10 +14,14 @@
 .card:hover { transform: translateY(-4px) scale(1.03); }
 
 /* Rarity gradients */
-.card.Bronze  { background: linear-gradient(145deg, #3D2800 0%, #8B5A00 40%, #CD7F32 70%, #3D2800 100%); box-shadow: 0 0 12px rgba(205,127,50,.5); }
-.card.Silver  { background: linear-gradient(145deg, #1A1A1A 0%, #606060 40%, #C0C0C0 70%, #1A1A1A 100%); box-shadow: 0 0 12px rgba(192,192,192,.5); }
-.card.Gold    { background: linear-gradient(145deg, #3D2800 0%, #A07000 40%, #FFD700 70%, #3D2800 100%); box-shadow: 0 0 18px rgba(255,215,0,.55); }
-.card.Diamond { background: linear-gradient(145deg, #0D0030 0%, #4A0080 35%, #8B00FF 60%, #00BFFF 85%, #0D0030 100%); box-shadow: 0 0 24px rgba(139,0,255,.6), 0 0 48px rgba(0,191,255,.3); }
+.card.tier-rookie       { background: linear-gradient(145deg, #1F2430 0%, #4B5563 40%, #9CA3AF 70%, #1F2430 100%); box-shadow: 0 0 10px rgba(156,163,175,.4); }
+.card.tier-bench-player { background: linear-gradient(145deg, #3D2800 0%, #8B5A00 40%, #CD7F32 70%, #3D2800 100%); box-shadow: 0 0 12px rgba(205,127,50,.5); }
+.card.tier-starter      { background: linear-gradient(145deg, #042F2E 0%, #0F766E 40%, #2DD4BF 70%, #042F2E 100%); box-shadow: 0 0 12px rgba(45,212,191,.45); }
+.card.tier-sixth-man    { background: linear-gradient(145deg, #0B1B3D 0%, #1D4ED8 40%, #60A5FA 70%, #0B1B3D 100%); box-shadow: 0 0 14px rgba(96,165,250,.5); }
+.card.tier-all-star     { background: linear-gradient(145deg, #3D2800 0%, #A07000 40%, #FFD700 70%, #3D2800 100%); box-shadow: 0 0 18px rgba(255,215,0,.55); }
+.card.tier-superstar    { background: linear-gradient(145deg, #3B0A00 0%, #C2410C 40%, #FB923C 70%, #3B0A00 100%); box-shadow: 0 0 20px rgba(251,146,60,.55); }
+.card.tier-mvp          { background: linear-gradient(145deg, #1E0A3C 0%, #6D28D9 40%, #C084FC 70%, #1E0A3C 100%); box-shadow: 0 0 22px rgba(192,132,252,.6); }
+.card.tier-hall-of-fame { background: linear-gradient(145deg, #0D0030 0%, #4A0080 35%, #8B00FF 60%, #00BFFF 85%, #0D0030 100%); box-shadow: 0 0 24px rgba(139,0,255,.6), 0 0 48px rgba(0,191,255,.3); }
 
 /* Shine overlay */
 .card::before {
@@ -28,8 +32,8 @@
   z-index: 2;
 }
 
-/* Diamond shimmer */
-.card.Diamond::after {
+/* Top-tier shimmer */
+.card.tier-mvp::after, .card.tier-hall-of-fame::after {
   content: '';
   position: absolute; inset: 0;
   background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,.04) 8px, rgba(255,255,255,.04) 9px);
@@ -94,13 +98,17 @@
   text-overflow: ellipsis;
 }
 .card-rarity {
-  font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase;
+  font-size: 10px; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: rgba(255,255,255,.55); margin-top: 1px;
 }
-.card.Gold    .card-rarity { color: #FFD700; }
-.card.Diamond .card-rarity { color: #00BFFF; }
-.card.Silver  .card-rarity { color: #C0C0C0; }
-.card.Bronze  .card-rarity { color: #CD7F32; }
+.card.tier-rookie       .card-rarity { color: #D1D5DB; }
+.card.tier-bench-player .card-rarity { color: #E0A060; }
+.card.tier-starter      .card-rarity { color: #5EEAD4; }
+.card.tier-sixth-man    .card-rarity { color: #93C5FD; }
+.card.tier-all-star     .card-rarity { color: #FFD700; }
+.card.tier-superstar    .card-rarity { color: #FDBA74; }
+.card.tier-mvp          .card-rarity { color: #D8B4FE; }
+.card.tier-hall-of-fame .card-rarity { color: #00BFFF; }
 
 /* Stats row */
 .card-stats {

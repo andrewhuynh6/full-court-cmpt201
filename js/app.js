@@ -247,7 +247,7 @@ function renderDashboard() {
               <div style="font-size:14px;color:var(--dim)">cards collected</div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px">
-              ${['Bronze','Silver','Gold','Diamond'].map(r => {
+              ${TIER_NAMES.map(r => {
                 const count = AppState.collection.filter(c=>c.rarity===r).length;
                 return `<div style="text-align:center;min-width:52px">
                   <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${rarityColor(r)}">${count}</div>
@@ -283,7 +283,7 @@ function getNextPackProgress() {
 }
 
 function rarityColor(r) {
-  return { Bronze:'var(--r-bronze)', Silver:'var(--r-silver)', Gold:'var(--r-gold)', Diamond:'var(--r-diamond)' }[r] || 'var(--dim)';
+  return 'var(--' + tierSlug(r) + ')';
 }
 
 // ── TEAM PAGE ──────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ function renderTeamPage() {
             <div class="collection-grid" id="bench-grid">
               ${bench.map((pl,i) => `<div onclick="swapPlayer(${i})" style="cursor:pointer;position:relative">
                 ${buildCard(pl)}
-                <div style="text-align:center;margin-top:4px;font-size:11px;color:var(--dim)">${pl.pos}</div>
+                <div style="text-align:center;margin-top:4px;font-size:12px;color:var(--dim)">${pl.pos}</div>
               </div>`).join('')}
             </div>`}
       </div>
@@ -361,7 +361,7 @@ function filterBench(pos, btn) {
     const realIdx = bench.indexOf(pl);
     return `<div onclick="swapPlayer(${realIdx})" style="cursor:pointer;position:relative">
       ${buildCard(pl)}
-      <div style="text-align:center;margin-top:4px;font-size:11px;color:var(--dim)">${pl.pos}</div>
+      <div style="text-align:center;margin-top:4px;font-size:12px;color:var(--dim)">${pl.pos}</div>
     </div>`;
   }).join('');
 }
@@ -395,26 +395,26 @@ function renderCollection() {
   const filtered = collFilter ? all.filter(p => p.rarity === collFilter) : all;
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">🃏 COLLECTION</div>
+      <div class="topbar-title">${icon('layers',22)} COLLECTION</div>
     </div>
     <div class="page-wrap">
       <div class="page-hdr">
         <h2>PLAYER COLLECTION</h2>
         <p>${all.length} cards · ${AppState.stats.packsOpened} packs opened</p>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:14px">
-        ${['Bronze','Silver','Gold','Diamond'].map(r => {
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;margin-bottom:18px">
+        ${TIER_NAMES.map(r => {
           const count = all.filter(c=>c.rarity===r).length;
           return `<div class="stat-pill"><div class="stat-num" style="color:${rarityColor(r)};font-size:22px">${count}</div><div class="stat-lbl">${r}</div></div>`;
         }).join('')}
       </div>
       <div class="coll-filter">
         <button class="filter-btn${!collFilter?' active':''}" onclick="setCollFilter(null,this)">All</button>
-        ${['Bronze','Silver','Gold','Diamond'].map(r => `<button class="filter-btn${collFilter===r?' active':''}" onclick="setCollFilter('${r}',this)">${r}</button>`).join('')}
+        ${TIER_NAMES.map(r => `<button class="filter-btn${collFilter===r?' active':''}" onclick="setCollFilter('${r}',this)">${r}</button>`).join('')}
       </div>
       <div class="collection-grid">
         ${filtered.length === 0
-          ? '<div class="empty-state"><div class="empty-icon">🃏</div><h3>NO CARDS YET</h3><p>Complete lessons to earn packs!</p></div>'
+          ? `<div class="empty-state"><div class="empty-icon">${icon('layers',48)}</div><h3>NO CARDS YET</h3><p>Complete lessons to earn packs!</p></div>`
           : filtered.map(pl => buildCard(pl)).join('')}
       </div>
     </div>`;
