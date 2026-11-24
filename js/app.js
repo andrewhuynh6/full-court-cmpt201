@@ -222,7 +222,7 @@ function renderDashboard() {
                 <div class="progress-bar" style="height:8px;margin-top:6px"><div class="progress-fill" style="width:${p}%"></div></div>
               </div>
               ${done?'<span class="tag ok">✓ Done</span>':'<span class="ch-pct">'+p+'%</span>'}
-              <button class="btn btn-secondary btn-sm" onclick="showLesson('${ch.lessons[0].id}')">Train</button>
+              <button class="btn btn-secondary btn-sm" onclick="showLesson('${(ch.lessons.find(l => !isLessonDone(AppState, l.id)) || ch.lessons[0]).id}')">Train</button>
             </div>`;
           }).join('')}
           <button class="btn btn-primary" style="margin-top:6px" onclick="navigate('learn')">View All Chapters →</button>

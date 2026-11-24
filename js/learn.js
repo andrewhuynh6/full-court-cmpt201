@@ -86,6 +86,13 @@ function showLesson(lessonId) {
   }
   if (!currentLesson) return;
 
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-learn').classList.add('active');
+  const navLearn = document.getElementById('nav-learn');
+  if (navLearn) navLearn.classList.add('active');
+  window.scrollTo(0, 0);
+
   currentStage = 'learn';
   if (isLearnDone(AppState, lessonId)) currentStage = 'practice';
   if (isPracticeDone(AppState, lessonId)) currentStage = 'quiz';
