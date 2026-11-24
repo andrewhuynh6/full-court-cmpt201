@@ -15,7 +15,9 @@ const DEFAULT_STATE = {
   team: null,          // set on first load
   collection: [],      // all player cards earned
   packQueue: [],       // packs waiting to be opened
-  exam: { best: 0, attempts: 0, passed: false },
+  exam: { best: 0, attempts: 0, passed: false },   // the championship (final exam)
+  playoffs: {},        // { chapterId: { best, attempts, passed } } one exam round per topic
+  drills: { day: '', done: {}, streak: 0 },        // side tasks, reset each day
   review: {},          // { questionId: { miss, streak, last } } missed questions to re-ask
   lessons: {},         // { lessonId: { learn, practice, quiz } }
   chapters: {},        // { chapterId: { completed, gameday } }
@@ -116,19 +118,12 @@ const XP_REWARDS = {
   quiz:    100,
 };
 
-// Pack thresholds (every N XP earned triggers a pack check)
-const PACK_MILESTONES = [300, 700, 1500, 3000, 6000];
-function checkPackMilestone(state, prevXP, newXP) {
-  for (const milestone of PACK_MILESTONES) {
-    if (prevXP < milestone && newXP >= milestone) {
-      let packType = 'Bronze Pack';
-      if (milestone >= 6000) packType = 'Diamond Premium';
-      else if (milestone >= 3000) packType = 'Gold Pack';
-      else if (milestone >= 1500) packType = 'Gold Pack';
-      else if (milestone >= 700) packType = 'Silver Pack';
-      state.packQueue.push({ type: packType, earned: Date.now() });
-    }
-  }
+// Packs are no longer tied to XP or levels. They come from daily drills and playoff exams (see drills.js, exam.js).
+const PACK_MILESTONES = [];
+function checkPackMilestone(state) { return state; }
+
+function givePack(state, type, from) {
+  state.packQueue.push({ type, from: from || '', earned: Date.now() });
   return state;
 }
 
@@ -177,12 +172,9 @@ function markQuiz(state, lessonId, score, total) {
   return state;
 }
 
-function markChapter(state, chapterId, packType) {
+function markChapter(state, chapterId) {
   if (!state.chapters[chapterId]) state.chapters[chapterId] = {};
-  if (!state.chapters[chapterId].completed) {
-    state.chapters[chapterId].completed = true;
-    state.packQueue.push({ type: packType, earned: Date.now() });
-  }
+  state.chapters[chapterId].completed = true;
   return state;
 }
 
@@ -198,7 +190,7 @@ function teamOVR(team) {
 // Get season progress info
 function getSeasonProgress(state) {
   let totalLessons = 0, doneLessons = 0, doneChapters = 0;
-  CHAPTERS.forEach(ch => {
+  CHAPTERS.filter(c => !c.bonus).forEach(ch => {
     totalLessons += ch.lessons.length;
     ch.lessons.forEach(l => { if (isLessonDone(state, l.id)) doneLessons++; });
     if (isChapterComplete(state, ch)) doneChapters++;

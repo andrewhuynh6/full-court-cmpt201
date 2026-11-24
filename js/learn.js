@@ -22,6 +22,18 @@ function shuffleQuestion(q) {
   return { ...q, opts: idx.map(i => q.opts[i]), ans: idx.indexOf(q.ans) };
 }
 
+const KIND_LABEL = { mcq: '', bug: 'Find the bug', blank: 'Fill the blank', order: 'Put in order', short: 'Short answer', code: 'Write the code' };
+const SELF_PASS = 0.67;                       // share of key points you must hit to count a written answer as correct
+const isSelfGraded = q => q.type === 'short' || q.type === 'code';
+
+function modelAnswerHtml(q) {
+  const model = q.type === 'code' ? codeBlock(q.model) : `<div class="model-text">${q.model}</div>`;
+  return `<div class="model-label">Model answer</div>${model}`;
+}
+function pointsHtml(q, name) {
+  return `<div class="model-label">Tick every key point your answer covered</div>` + q.points.map((p, i) => `<label class="pt-row"><input type="checkbox" name="${name}" data-i="${i}"><span>${p}</span></label>`).join('');
+}
+
 function qBody(q) {
   const isMcq = !q.type || q.type === 'mcq';
   return q.q + (q.code && isMcq ? `<div class="code-block">${q.code}</div>` : '');
@@ -36,7 +48,8 @@ function renderQuestion(host, q, done, opts = {}) {
   const finish = ok => {
     if (finished) return;
     finished = true;
-    host.querySelector('.q-fb').innerHTML = quiet ? '<div class="q-recorded">Answer recorded</div>' : `<div class="mcq-fb ${ok ? 'c' : 'w'}">${ok ? '✓ Correct! ' : '✗ Not quite. '}${q.exp}</div>`;
+    const lead = isSelfGraded(q) ? (ok ? '✓ Good answer. ' : '✗ Study the model answer again. ') : (ok ? '✓ Correct! ' : '✗ Not quite. ');
+    host.querySelector('.q-fb').innerHTML = quiet ? '<div class="q-recorded">Answer recorded</div>' : `<div class="mcq-fb ${ok ? 'c' : 'w'}">${lead}${q.exp || ''}</div>`;
     done(ok);
   };
 
@@ -50,6 +63,25 @@ function renderQuestion(host, q, done, opts = {}) {
       if (quiet) b.classList.add('picked'); else if (i === q.ans) b.classList.add('cor'); else { b.classList.add('wrg'); opts[q.ans].classList.add('show'); }
       finish(i === q.ans);
     });
+  }
+
+  if (isSelfGraded(q)) {
+    const code = type === 'code';
+    host.innerHTML = `<textarea class="ans-box${code ? ' code' : ''}" rows="${code ? 10 : q.long ? 7 : 4}" spellcheck="false" placeholder="${code ? 'Write your code here. Closed book: no peeking!' : 'Answer in 2-3 sentences.'}">${opts.initial ? H_esc(opts.initial) : ''}</textarea>
+      ${quiet ? '' : '<button class="btn btn-primary ans-show">Show model answer</button>'}<div class="ans-reveal"></div><div class="q-fb"></div>`;
+    const ta = host.querySelector('.ans-box');
+    if (quiet) { ta.addEventListener('input', () => opts.onText && opts.onText(ta.value)); return; }
+    host.querySelector('.ans-show').addEventListener('click', e => {
+      e.target.remove(); ta.readOnly = true;
+      host.querySelector('.ans-reveal').innerHTML = modelAnswerHtml(q) + pointsHtml(q, 'pt') + '<button class="btn btn-gold ans-submit" style="margin-top:12px">Done grading myself</button>';
+      host.querySelector('.ans-submit').addEventListener('click', ev => {
+        const n = host.querySelectorAll('input[name=pt]:checked').length;
+        ev.target.disabled = true;
+        host.querySelectorAll('input[name=pt]').forEach(c => { c.disabled = true; });
+        finish(n / q.points.length >= SELF_PASS);
+      });
+    });
+    return;
   }
 
   if (type === 'bug') {
@@ -126,10 +158,9 @@ function renderChapterList() {
     <div class="page-wrap">
       <div class="page-hdr">
         <h2>LEARN</h2>
-        <p>Select a chapter to begin your training</p>
+        <p>Work through each topic. Finishing a topic's lessons unlocks its playoff round.</p>
       </div>
       ${reviewBannerHtml()}
-      ${examCardHtml()}
       <div class="chapter-map">
       ${CHAPTERS.map(ch => {
         const done = isChapterComplete(AppState, ch);
@@ -140,13 +171,14 @@ function renderChapterList() {
           <div class="chapter-info">
             <div class="chapter-title">${icon(ch.icon,20)} ${ch.title}</div>
             <div class="chapter-sub">${ch.subtitle}</div>
-            <div class="chapter-prog">${doneLessons}/${ch.lessons.length} lessons · Reward: ${ch.packReward}</div>
+            <div class="chapter-prog">${doneLessons}/${ch.lessons.length} lessons${ch.bonus ? ' · Bonus topic' : ''}</div>
           </div>
           ${done ? '<span class="tag ok">✓ COMPLETE</span>' : ''}
           <div class="chapter-arrow">${done ? '✓' : '›'}</div>
         </div>`;
       }).join('')}
       </div>
+      <div class="learn-foot"><button class="btn btn-secondary" onclick="navigate('playoffs')">${icon('trophy', 18)} Go to the playoffs</button></div>
     </div>`;
 }
 
@@ -165,7 +197,7 @@ function showChapter(chId) {
     <div class="page-wrap">
       <div class="page-hdr">
         <h2>${currentChapter.title.toUpperCase()}</h2>
-        <p>${currentChapter.subtitle} · ${currentChapter.packReward} on completion</p>
+        <p>${currentChapter.subtitle}${currentChapter.bonus ? ' · Bonus topic' : ''}</p>
       </div>
       ${currentChapter.lessons.map((lesson, i) => {
         const lrn = isLearnDone(AppState, lesson.id);
@@ -182,8 +214,8 @@ function showChapter(chId) {
           </div>
         </div>`;
       }).join('')}
-      ${done ? `<div style="margin-top:16px"><div class="tag ok" style="font-size:12px;padding:6px 14px">✓ Chapter Complete! Reward sent to your pack queue.</div></div>` : ''}
-      ${!done ? `<div style="margin-top:12px;font-size:12px;color:var(--dim)">Complete all lessons to unlock ${currentChapter.packReward}.</div>` : ''}
+      ${done ? `<div class="panel round-nudge"><div><strong>Topic complete.</strong> ${currentChapter.bonus ? 'The bonus round is open.' : 'Round ' + roundNo(currentChapter) + ' of the playoffs is ready.'}</div><button class="btn btn-gold btn-sm" onclick="navigate('playoffs')">Go to playoffs</button></div>`
+        : `<div class="learn-foot-note">Finish all lessons to unlock ${currentChapter.bonus ? 'the bonus round' : 'Round ' + roundNo(currentChapter)} of the playoffs.</div>`}
     </div>`;
 }
 
@@ -409,7 +441,7 @@ function startMCQReplay(mode) {
 
 function renderMCQQuestion(sc, mode) {
   const q = mcq.questions[mcq.q];
-  const kind = { mcq: '', bug: 'Find the bug', blank: 'Fill the blank', order: 'Put in order' }[q.type || 'mcq'];
+  const kind = KIND_LABEL[q.type || 'mcq'];
   sc.innerHTML = `<div class="mcq-wrap">
     <div class="mcq-score-bar">
       <div><div class="mcq-score-num">${mcq.score}/${mcq.questions.length}</div><div class="mcq-score-lbl">Score</div></div>
@@ -492,148 +524,9 @@ function renderMCQFinal(sc, mode) {
 function checkChapterComplete() {
   if (!currentChapter) return;
   if (isChapterComplete(AppState, currentChapter) && !AppState.chapters[currentChapter.id]?.completed) {
-    markChapter(AppState, currentChapter.id, currentChapter.packReward);
-    updatePackBadge();
+    markChapter(AppState, currentChapter.id);
     setTimeout(() => {
-      showXPPopup(0, 'Chapter Complete! ' + currentChapter.packReward + ' added to your queue!');
+      showXPPopup(0, 'Topic complete! ' + (currentChapter.bonus ? 'Bonus round unlocked.' : 'Playoff Round ' + roundNo(currentChapter) + ' unlocked.'));
     }, 800);
   }
-}
-
-// Game Day
-let gameState = { pts: 0, opp: 0, q: 0, answered: false, questions: [], chapterId: null };
-
-function showGameDay(chId) {
-  navigate('gameday');
-  const ch = CHAPTERS.find(c => c.id === chId);
-  if (!ch) { renderGameDayLocked(); return; }
-  if (!isChapterComplete(AppState, ch)) { renderGameDayLocked(); return; }
-
-  // Build question pool from all chapter lessons
-  const pool = [];
-  ch.lessons.forEach(l => pool.push(...l.quiz));
-  const shuffled = pool.sort(() => Math.random()-.5).slice(0, 10).map(shuffleQuestion);
-  gameState = { pts: 0, opp: Math.floor(Math.random()*30+50), q: 0, answered: false, questions: shuffled, chapterId: chId, done: false };
-  renderGameDayQuestion();
-}
-
-function renderGameDayLocked() {
-  const v = document.getElementById('view-gameday');
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY</div></div>
-  <div class="page-wrap">
-    <div class="empty-state">
-      <div class="empty-icon">${icon('lock',48)}</div>
-      <h3>LOCKED</h3>
-      <p>Complete a full chapter to unlock Game Day.</p>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="navigate('learn')">Go to Training</button>
-    </div>
-    <div style="margin-top:24px">
-      ${CHAPTERS.map(ch => {
-        const done = isChapterComplete(AppState, ch);
-        return `<div class="chapter-item${done?'':' locked'}" onclick="${done?`showGameDay('${ch.id}')`:''}">
-          <div class="chapter-num">${ch.num}</div>
-          <div class="chapter-info">
-            <div class="chapter-title">${icon(ch.icon,20)} ${ch.title} — Game Day</div>
-            <div class="chapter-sub">${ch.subtitle}</div>
-          </div>
-          ${done ? '<span class="tag ok">AVAILABLE</span>' : '<span class="tag" style="color:var(--dim)">LOCKED</span>'}
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
-}
-
-function renderGameDayQuestion() {
-  const v = document.getElementById('view-gameday');
-  if (gameState.done) { renderGameDayResult(); return; }
-  const q  = gameState.questions[gameState.q];
-  const ch = CHAPTERS.find(c => c.id === gameState.chapterId);
-  const letters = ['A','B','C','D'];
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">GAME DAY — ${ch?.title||''}</div></div>
-  <div class="page-wrap">
-    <div class="scoreboard">
-      <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts">${gameState.pts}</div><div class="sb-info">Points</div></div>
-      <div class="sb-sep">VS</div>
-      <div class="sb-team"><div class="sb-name">CPU</div><div class="sb-pts">${gameState.opp}</div><div class="sb-info">Points</div></div>
-    </div>
-    <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
-      <span class="mcq-prog" style="font-size:13px">Possession ${gameState.q+1} of ${gameState.questions.length}</span>
-      <div class="progress-bar" style="flex:1;height:6px"><div class="progress-fill" style="width:${((gameState.q)/gameState.questions.length*100)}%"></div></div>
-    </div>
-    <div class="mcq-question">
-      <div class="mcq-q-text">Q${gameState.q+1}. ${qBody(q)}</div>
-      <div class="mcq-opts" id="gd-opts">
-        ${q.opts.map((o,i) => `<button class="mcq-opt" id="gdop${i}" onclick="answerGameDay(${i})">
-          <span class="mcq-ol">${letters[i]}</span><span>${o}</span>
-        </button>`).join('')}
-      </div>
-      <div id="gd-fb"></div>
-    </div>
-    <div class="mcq-nav">
-      <button class="btn btn-primary" id="gd-next" onclick="nextGameDay()" disabled>Next Possession →</button>
-    </div>
-  </div>`;
-}
-
-function answerGameDay(i) {
-  if (gameState.answered) return;
-  gameState.answered = true;
-  const q = gameState.questions[gameState.q];
-  document.querySelectorAll('.mcq-opt').forEach(o => o.disabled = true);
-  const opts = document.querySelectorAll('.mcq-opt');
-  const fb   = document.getElementById('gd-fb');
-  if (i === q.ans) {
-    opts[i].classList.add('cor');
-    gameState.pts += Math.floor(Math.random()*3+2)*2; // 2-pt or 3-pt
-    if (fb) fb.innerHTML = `<div class="mcq-fb c">${icon('dribbble',18)} SCORED! +${2} pts — ${q.exp}</div>`;
-  } else {
-    opts[i].classList.add('wrg');
-    opts[q.ans].classList.add('show');
-    if (fb) fb.innerHTML = `<div class="mcq-fb w">${icon('circle-x',18)} MISSED SHOT — ${q.exp}</div>`;
-  }
-  const nb = document.getElementById('gd-next');
-  if (nb) nb.disabled = false;
-}
-
-function nextGameDay() {
-  gameState.q++;
-  gameState.answered = false;
-  if (gameState.q >= gameState.questions.length) {
-    gameState.done = true;
-    AppState.stats.gamesPlayed++;
-    if (gameState.pts > gameState.opp) AppState.stats.gamesWon++;
-    // Award XP
-    const xp = Math.round(gameState.pts * 1.5);
-    const prev = AppState.player.xp;
-    addXP(AppState, xp);
-    checkPackMilestone(AppState, prev, AppState.player.xp);
-    saveState(AppState);
-    updateSidebar();
-    updatePackBadge();
-  }
-  renderGameDayQuestion();
-}
-
-function renderGameDayResult() {
-  const v    = document.getElementById('view-gameday');
-  const win  = gameState.pts > gameState.opp;
-  const pct  = Math.round(gameState.pts / (gameState.pts + gameState.opp) * 100);
-  const xp   = Math.round(gameState.pts * 1.5);
-  v.innerHTML = `<div class="topbar"><div class="topbar-title">FINAL BUZZER</div></div>
-  <div class="page-wrap">
-    <div class="scoreboard">
-      <div class="sb-team"><div class="sb-name">YOU</div><div class="sb-pts" style="color:${win?'var(--ok)':'var(--bad)'}">${gameState.pts}</div></div>
-      <div class="sb-sep">${win?icon('trophy',36):icon('frown',36)}</div>
-      <div class="sb-team"><div class="sb-name">CPU</div><div class="sb-pts">${gameState.opp}</div></div>
-    </div>
-    <div class="final-screen">
-      <div class="final-grade ${win?'A':'D'}">${win?'VICTORY!':'TOUGH LOSS'}</div>
-      <div class="final-xp-earned">+${xp} XP EARNED</div>
-      <div style="font-size:12px;color:var(--dim);margin-bottom:20px">${gameState.pts} pts scored · ${gameState.questions.length} possessions</div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-secondary" onclick="showGameDay('${gameState.chapterId}')">Play Again</button>
-        <button class="btn btn-primary" onclick="navigate('dashboard')">Back to Dashboard</button>
-      </div>
-    </div>
-  </div>`;
 }

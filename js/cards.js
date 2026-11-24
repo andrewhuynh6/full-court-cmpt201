@@ -43,7 +43,7 @@ function buildCard(player, size='') {
   let artHTML;
   if (player.nbaId) {
     const src = `https://cdn.nba.com/headshots/nba/latest/${imgSize}/${player.nbaId}.png`;
-    artHTML = `<img class="player-headshot" src="${src}" alt="${player.name}"
+    artHTML = `<img class="player-headshot" loading="lazy" src="${src}" alt="${player.name}"
         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="card-art-fallback">${playerSVG(player.pos, player.num)}</div>`;
   } else {
@@ -78,18 +78,18 @@ function buildPackCard(pack, index) {
   </div>`;
 }
 
-// Pack opening overlay
-let _currentRevealedCard = null;
+// Pack opening overlay: tap the pack, then reveal its 5 cards one at a time (weakest first), then collect them all.
+let _pack = null;   // { idx, type, cards, shown }
+const PACK_ICONS = () => ({ 'Bronze Pack':icon('package',48), 'Silver Pack':icon('circle',48), 'Gold Pack':icon('medal',48), 'Diamond Premium':icon('gem',48) });
 
 function openPack(idx) {
   const pack = AppState.packQueue[idx];
   if (!pack) return;
-  const card = genPackCard(pack.type);
-  _currentRevealedCard = { card, idx };
-  showPackOverlay(pack, card);
+  _pack = { idx, type: pack.type, from: pack.from || '', cards: genPack(pack.type), shown: 0 };
+  showPackOverlay();
 }
 
-function showPackOverlay(pack, card) {
+function packOverlayEl() {
   let overlay = document.getElementById('packOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -97,57 +97,66 @@ function showPackOverlay(pack, card) {
     overlay.className = 'pack-open-overlay';
     document.body.appendChild(overlay);
   }
-  const icons = { 'Bronze Pack':icon('package',48), 'Silver Pack':icon('circle',48), 'Gold Pack':icon('medal',48), 'Diamond Premium':icon('gem',48) };
-  const cls   = pack.type.split(' ')[0];
-  overlay.innerHTML = `
-    <div style="text-align:center;margin-bottom:12px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--dim)">YOU EARNED A PACK</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--ball)">${pack.type}</div>
-    </div>
-    <div id="packRevealArea">
-      <div class="pack-card ${cls}" id="packClickable" onclick="revealCard()" style="cursor:pointer">
-        <div class="pack-icon">${icons[pack.type]||icon('package',48)}</div>
-        <div class="pack-title">${pack.type}</div>
-        <div class="pack-count">Click to reveal!</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--dim);margin-top:14px">Click the pack to reveal your player</div>
-  `;
   overlay.classList.remove('hidden');
+  return overlay;
 }
 
-function revealCard() {
-  if (!_currentRevealedCard) return;
-  const { card, idx } = _currentRevealedCard;
+function showPackOverlay() {
+  const overlay = packOverlayEl();
+  const cls = _pack.type.split(' ')[0];
+  overlay.innerHTML = `
+    <div class="pack-head">
+      <div class="pack-kicker">${_pack.from ? 'REWARD: ' + _pack.from.toUpperCase() : 'YOU EARNED A PACK'}</div>
+      <div class="pack-name">${_pack.type}</div>
+    </div>
+    <div id="packRevealArea">
+      <div class="pack-card ${cls}" onclick="revealNextCard()" style="cursor:pointer">
+        <div class="pack-icon">${PACK_ICONS()[_pack.type] || icon('package',48)}</div>
+        <div class="pack-title">${_pack.type}</div>
+        <div class="pack-count">${PACK_SIZE} cards · tap to open</div>
+      </div>
+    </div>
+    <div class="pack-sub">Higher packs hold higher tiers</div>`;
+}
+
+function revealNextCard() {
+  if (!_pack) return;
   const area = document.getElementById('packRevealArea');
   if (!area) return;
-  area.innerHTML = `<div class="pack-reveal">${buildCard(card, 'lg')}</div>
-    <div style="text-align:center;margin-top:16px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:2px">NEW PLAYER!</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--white);letter-spacing:1px;margin-top:4px">${card.name}</div>
-      <div style="font-size:11px;color:var(--dim);margin-top:2px">${card.rarity} · OVR ${card.ovr}</div>
-      <div style="display:flex;gap:10px;justify-content:center;margin-top:18px">
-        <button class="btn btn-primary" onclick="collectCard()">Add to Collection</button>
-      </div>
+  if (_pack.shown >= _pack.cards.length) { showPackSummary(); return; }
+  const card = _pack.cards[_pack.shown++];
+  const last = _pack.shown === _pack.cards.length;
+  area.innerHTML = `<div class="pack-count-row">Card ${_pack.shown} of ${_pack.cards.length}</div>
+    <div class="pack-reveal">${buildCard(card, 'lg')}</div>
+    <div class="pack-reveal-info">
+      <div class="pack-reveal-name">${card.name}</div>
+      <div class="pack-reveal-meta" style="border-color:${rarityColor(card.rarity)}">${card.rarity} · OVR ${card.ovr}</div>
+      <button class="btn btn-primary" onclick="revealNextCard()">${last ? 'See all cards →' : 'Next card →'}</button>
     </div>`;
 }
 
-function collectCard() {
-  if (!_currentRevealedCard) return;
-  const { card, idx } = _currentRevealedCard;
-  // Add to collection
-  AppState.collection.push(card);
-  // Remove pack from queue
+function showPackSummary() {
+  const area = document.getElementById('packRevealArea');
+  if (!area) return;
+  area.innerHTML = `<div class="pack-summary">${_pack.cards.map(c => `<div class="pack-sum-card">${buildCard(c)}</div>`).join('')}</div>
+    <div class="pack-reveal-info"><button class="btn btn-gold" onclick="collectPack()">Add all to collection</button></div>`;
+}
+
+function collectPack() {
+  if (!_pack) return;
+  const { idx, cards } = _pack;
+  AppState.collection.push(...cards);
   AppState.packQueue.splice(idx, 1);
   AppState.stats.packsOpened++;
   saveState(AppState);
-  _currentRevealedCard = null;
-  // Close overlay
+  const best = cards[cards.length - 1];
+  _pack = null;
   document.getElementById('packOverlay').classList.add('hidden');
-  // Update nav badge & dashboard
+  document.querySelectorAll('[data-pack-btn]').forEach(b => b.remove());
   updatePackBadge();
   renderDashboard();
-  showXPPopup(0, 'New Player: ' + card.name + ' (OVR ' + card.ovr + ')');
+  if (document.getElementById('view-collection').classList.contains('active')) renderCollection();
+  showXPPopup(0, 'Best pull: ' + best.name + ' (' + best.rarity + ', OVR ' + best.ovr + ')');
 }
 
 function updatePackBadge() {

@@ -736,3 +736,83 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
 .viz-full .viz-expand { display: none; }
 .viz-full-close { position: absolute; top: 10px; right: 14px; z-index: 2; }
 .viz-full .viz-count { margin-left: auto; }
+
+/* ── Playoffs bracket ───────────────────────────────────────────── */
+.bracket { display: flex; flex-direction: column; gap: 12px; }
+.round-card, .champ-card, .drill-card {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 18px;
+  background: var(--panel); border: 1.5px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-sm);
+}
+.round-card.ready { border-color: var(--ball); }
+.round-card.passed, .drill-card.done { border-color: var(--ok); }
+.round-card.locked, .champ-card.locked, .drill-card.locked { background: var(--panel2); box-shadow: none; }
+.round-badge { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--ball2); color: var(--ball-text); flex-shrink: 0; }
+.round-card.passed .round-badge { background: var(--ok); color: var(--on-ok); }
+.round-card.locked .round-badge { background: var(--panel3); color: var(--dim); }
+.round-info { flex: 1 1 200px; min-width: 0; }
+.round-label { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 14px; color: var(--dim); }
+.round-title { font-size: 18px; font-weight: 700; color: var(--white); }
+.round-sub { font-size: 14px; color: var(--dim); margin-top: 2px; }
+.round-reward { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--gold); }
+.champ-card { background: linear-gradient(135deg, var(--hero-a), var(--hero-b)); border-color: var(--gold); padding: 20px 18px; }
+.champ-card.locked { background: var(--panel2); border-color: var(--border); }
+.champ-trophy { color: var(--gold); display: flex; flex-shrink: 0; }
+.round-nudge { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.learn-foot { margin-top: 22px; }
+.learn-foot-note { margin-top: 14px; font-size: 14px; color: var(--dim); }
+.db-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+
+/* ── Daily drills ───────────────────────────────────────────────── */
+.drill-count { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--white); }
+.drill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+.drill-ico { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; color: #fff; flex-shrink: 0; }
+.drill-ico.Bronze { background: linear-gradient(160deg, #7A3E0B, #B06A2C); }
+.drill-ico.Silver { background: linear-gradient(160deg, #4B5563, #8B95A3); }
+.drill-ico.Gold { background: linear-gradient(160deg, #8A5A00, #C28A00); }
+.drill-ico.Diamond { background: linear-gradient(160deg, #2E1065, #6D28D9); }
+.drill-info { flex: 1 1 180px; min-width: 0; }
+.drill-title { font-size: 17px; font-weight: 700; color: var(--white); }
+.drill-desc { font-size: 14.5px; color: var(--dim); margin: 2px 0 6px; line-height: 1.45; }
+.drill-reward { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pack-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+
+/* ── Written answers and self-grading ───────────────────────────── */
+.ans-box { width: 100%; box-sizing: border-box; min-height: 96px; padding: 12px 14px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--white); background: var(--panel); border: 1.5px solid var(--border); border-radius: var(--r-md); resize: vertical; }
+.ans-box.code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14px; background: var(--panel2); white-space: pre; overflow: auto; tab-size: 4; }
+.ans-box:focus { outline: 3px solid var(--gold); outline-offset: 1px; }
+.ans-show { margin-top: 12px; }
+.model-label { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin: 16px 0 6px; }
+.model-text { padding: 12px 14px; background: rgba(21,128,61,.08); border-left: 4px solid var(--ok); border-radius: var(--r-sm); font-size: 16px; line-height: 1.55; }
+.your-answer { padding: 12px 14px; background: var(--panel2); border-radius: var(--r-sm); white-space: pre-wrap; font-size: 15px; line-height: 1.5; }
+.pt-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; font-size: 15.5px; line-height: 1.45; cursor: pointer; }
+.pt-row input { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; accent-color: var(--ok); }
+.grade-item { margin-bottom: 16px; }
+.grade-head { margin-bottom: 8px; }
+
+/* ── Pack opening (5 cards) ─────────────────────────────────────── */
+.pack-open-overlay { overflow-y: auto; padding: 24px 12px; justify-content: center; }
+.pack-head { text-align: center; }
+.pack-kicker { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px; color: rgba(255,255,255,.7); }
+.pack-name { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FFB36B; }
+.pack-sub { font-size: 13px; color: rgba(255,255,255,.7); }
+.pack-count-row { text-align: center; color: rgba(255,255,255,.75); font-size: 13px; letter-spacing: 1px; margin-bottom: 10px; }
+.pack-reveal-info { text-align: center; margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pack-reveal-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; letter-spacing: 1px; }
+.pack-reveal-meta { font-size: 14px; font-weight: 700; color: #fff; padding: 3px 12px; border: 2px solid; border-radius: 99px; }
+.pack-summary { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: min(980px, 96vw); }
+.pack-sum-card { zoom: .8; }
+
+/* ── Collection: owned / locked ─────────────────────────────────── */
+.stat-sub { font-size: 11.5px; color: var(--dim); margin-top: 2px; }
+.seg { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 14px; background: var(--panel2); border-radius: var(--r-md); }
+.seg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.seg-btn.active { background: var(--panel); color: var(--ball-text); box-shadow: var(--shadow-sm); }
+.coll-note { font-size: 14px; color: var(--dim); margin-bottom: 14px; }
+.locked-card { position: relative; }
+.locked-card .card { filter: grayscale(1) brightness(.55); }
+.locked-card .player-headshot { filter: brightness(0) opacity(.55); }
+.lock-badge { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; }
+
+table.mini { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; display: block; overflow-x: auto; }
+table.mini th, table.mini td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.mini th { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }

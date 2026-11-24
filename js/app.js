@@ -35,7 +35,8 @@ function buildLayout() {
         ${navItem('dashboard','Home','dashboard','house')}
         <div class="nav-section-label">Training</div>
         ${navItem('learn','Learn','learn','book-open')}
-        ${navItem('gameday','Game Day','gameday','dribbble','Game')}
+        ${navItem('playoffs','Playoffs','playoffs','trophy')}
+        ${navItem('drills','Daily Drills','drills','target','Drills')}
         <div class="nav-section-label">Roster</div>
         ${navItem('team','My Team','team','users','Team')}
         ${navItem('collection','Collection','collection','layers','Cards')}
@@ -43,8 +44,6 @@ function buildLayout() {
           <span class="nav-ico">${icon('gift',22)}</span><span class="nav-lbl">Open Packs</span>
           <span class="nav-badge" id="packBadge" style="display:none">0</span>
         </div>
-        <div class="nav-section-label">Season</div>
-        ${navItem('season','Season Progress','season','trophy','Season')}
       </nav>
       <div class="sidebar-footer">
         <div class="sidebar-player-name" id="sb-name">Rookie</div>
@@ -56,10 +55,10 @@ function buildLayout() {
     <main class="main">
       <div id="view-dashboard" class="view active"></div>
       <div id="view-learn"     class="view"></div>
-      <div id="view-gameday"   class="view"></div>
+      <div id="view-playoffs"  class="view"></div>
+      <div id="view-drills"    class="view"></div>
       <div id="view-team"      class="view"></div>
       <div id="view-collection" class="view"></div>
-      <div id="view-season"    class="view"></div>
     </main>`;
   renderDashboard();
 }
@@ -99,9 +98,9 @@ function navigate(view) {
   if (view === 'dashboard')   renderDashboard();
   if (view === 'team')        renderTeamPage();
   if (view === 'collection')  renderCollection();
-  if (view === 'season')      renderSeason();
+  if (view === 'playoffs')    renderPlayoffs();
+  if (view === 'drills')      renderDrills();
   if (view === 'learn')       showLearnView();
-  if (view === 'gameday')     renderGameDayLocked();
   window.scrollTo(0,0);
 }
 
@@ -116,7 +115,7 @@ function updateSidebar() {
 
 function openPacksIfAny() {
   if (!AppState.packQueue.length) {
-    alert('No packs to open! Complete lessons to earn packs.');
+    showXPPopup(0, 'No packs yet. Clear a daily drill or win a playoff round to earn one.');
     return;
   }
   openPack(0);
@@ -148,7 +147,6 @@ function renderDashboard() {
   const prog  = sp.doneLessons;
   const total = sp.totalLessons;
   const pct   = Math.round(prog / total * 100);
-  const nextPack = getNextPackProgress();
   const ovr = teamOVR(team);
 
   v.innerHTML = `
@@ -209,10 +207,10 @@ function renderDashboard() {
             <div class="stat-pill"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>
             <div style="flex:1;min-width:0">
               <div class="progress-bar" style="margin-top:0"><div class="progress-fill" style="width:${pct}%"></div></div>
-              <div style="font-size:14px;color:var(--dim);margin-top:8px">${prog} / ${total} lessons · ${sp.doneChapters}/${sp.totalChapters} chapters</div>
+              <div style="font-size:14px;color:var(--dim);margin-top:8px">${prog} / ${total} lessons · ${sp.doneChapters}/${sp.totalChapters} topics</div>
             </div>
           </div>
-          ${CHAPTERS.slice(0,3).map(ch => {
+          ${CHAPTERS.filter(c => !c.bonus).map(ch => {
             const done = isChapterComplete(AppState, ch);
             const doneLs = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
             const p = Math.round(doneLs/ch.lessons.length*100);
@@ -223,23 +221,24 @@ function renderDashboard() {
                 <div class="progress-bar" style="height:8px;margin-top:6px"><div class="progress-fill" style="width:${p}%"></div></div>
               </div>
               ${done?'<span class="tag ok">✓ Done</span>':'<span class="ch-pct">'+p+'%</span>'}
-              <button class="btn btn-secondary btn-sm" onclick="showLesson('${(ch.lessons.find(l => !isLessonDone(AppState, l.id)) || ch.lessons[0]).id}')">Train</button>
+              <button class="btn btn-secondary btn-sm" onclick="showLesson('${(ch.lessons.find(l => !isLessonDone(AppState, l.id)) || ch.lessons[0]).id}')">${done ? 'Review' : 'Train'}</button>
             </div>`;
           }).join('')}
-          <button class="btn btn-primary" style="margin-top:6px" onclick="navigate('learn')">View All Chapters →</button>
-          <button class="btn btn-gold" style="margin-top:6px;margin-left:8px" onclick="showExamIntro()">Final exam</button>
+          <div class="db-actions">
+            <button class="btn btn-primary" onclick="navigate('learn')">All topics →</button>
+            <button class="btn btn-gold" onclick="navigate('playoffs')">Playoffs</button>
+          </div>
         </div>
 
         <div class="db-stack">
           ${reviewPanelHtml()}
-          <!-- Next Reward -->
+          <!-- Daily drills -->
           <div class="panel">
-            <div class="panel-title">${icon('gift',20)} Next Reward</div>
-            ${nextPack
-              ? `<div style="font-size:16px;font-weight:600;color:var(--white)">${nextPack.type}</div>
-                 <div style="font-size:14px;color:var(--dim);margin-top:2px">${nextPack.current} / ${nextPack.target} XP</div>
-                 <div class="progress-bar"><div class="progress-fill" style="width:${nextPack.pct}%"></div></div>`
-              : `<div style="text-align:center;padding:12px;color:var(--ok);font-family:'Bebas Neue',sans-serif;font-size:22px;">ALL MILESTONES HIT</div>`}
+            <div class="panel-title">${icon('target',20)} Daily Drills</div>
+            <div style="font-size:16px;font-weight:600;color:var(--white)">${drillDoneCount()} of ${DRILLS.length} cleared today</div>
+            <div style="font-size:14px;color:var(--dim);margin:2px 0 4px">Each drill earns a pack of ${PACK_SIZE} cards.</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(drillDoneCount()/DRILLS.length*100)}%"></div></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="navigate('drills')">Start a drill →</button>
           </div>
 
           <!-- Collection Preview -->
@@ -264,25 +263,6 @@ function renderDashboard() {
 
       </div>
     </div>`;
-}
-
-function getNextPackProgress() {
-  const milestones = PACK_MILESTONES;
-  const xp = AppState.player.xp;
-  for (const m of milestones) {
-    if (xp < m) {
-      let type = 'Bronze Pack';
-      if (m >= 6000) type = 'Diamond Premium';
-      else if (m >= 3000) type = 'Gold Pack';
-      else if (m >= 1500) type = 'Gold Pack';
-      else if (m >= 700) type = 'Silver Pack';
-      const prev = milestones[milestones.indexOf(m)-1] || 0;
-      const current = xp - prev;
-      const target  = m - prev;
-      return { type, current: xp, target: m, pct: Math.round(xp/m*100) };
-    }
-  }
-  return null;
 }
 
 function rarityColor(r) {
@@ -391,11 +371,22 @@ function swapPlayer(benchIdx) {
 // ── COLLECTION PAGE ───────────────────────────────────────────────
 
 let collFilter = null;
+let collView = 'owned';      // 'owned' | 'locked'
+let collLimit = 60;          // how many locked cards to show before "Show more"
+
+function ownedPlayerIds() {
+  return new Set([...AppState.collection, ...AppState.team].map(c => c.nbaId));
+}
 
 function renderCollection() {
   const v = document.getElementById('view-collection');
   const all = [...AppState.collection, ...AppState.team];
-  const filtered = collFilter ? all.filter(p => p.rarity === collFilter) : all;
+  const owned = ownedPlayerIds();
+  const locked = NBA_PLAYERS.filter(p => !owned.has(p.nbaId)).sort((a, b) => b.ovr - a.ovr);
+  const base = collView === 'locked' ? locked : all;
+  const filtered = collFilter ? base.filter(p => p.rarity === collFilter) : base;
+  const shown = collView === 'locked' ? filtered.slice(0, collLimit) : filtered;
+  const pctUnlocked = Math.round(owned.size / NBA_PLAYERS.length * 100);
   v.innerHTML = `
     <div class="topbar">
       <div class="topbar-title">${icon('layers',22)} COLLECTION</div>
@@ -403,89 +394,46 @@ function renderCollection() {
     <div class="page-wrap">
       <div class="page-hdr">
         <h2>PLAYER COLLECTION</h2>
-        <p>${all.length} cards · ${AppState.stats.packsOpened} packs opened</p>
+        <p>${owned.size} of ${NBA_PLAYERS.length} players unlocked · ${all.length} cards · ${AppState.stats.packsOpened} packs opened</p>
       </div>
+      <div class="progress-bar" style="margin-bottom:18px"><div class="progress-fill" style="width:${pctUnlocked}%"></div></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;margin-bottom:18px">
         ${TIER_NAMES.map(r => {
-          const count = all.filter(c=>c.rarity===r).length;
-          return `<div class="stat-pill"><div class="stat-num" style="color:${rarityColor(r)};font-size:22px">${count}</div><div class="stat-lbl">${r}</div></div>`;
+          const have = all.filter(c => c.rarity === r).length;
+          const left = locked.filter(c => c.rarity === r).length;
+          return `<div class="stat-pill"><div class="stat-num" style="color:${rarityColor(r)};font-size:22px">${have}</div><div class="stat-lbl">${r}</div><div class="stat-sub">${left} locked</div></div>`;
         }).join('')}
+      </div>
+      <div class="seg" role="tablist">
+        <button class="seg-btn${collView === 'owned' ? ' active' : ''}" onclick="setCollView('owned')">Owned (${all.length})</button>
+        <button class="seg-btn${collView === 'locked' ? ' active' : ''}" onclick="setCollView('locked')">${icon('lock', 15)} Locked (${locked.length})</button>
       </div>
       <div class="coll-filter">
         <button class="filter-btn${!collFilter?' active':''}" onclick="setCollFilter(null,this)">All</button>
         ${TIER_NAMES.map(r => `<button class="filter-btn${collFilter===r?' active':''}" onclick="setCollFilter('${r}',this)">${r}</button>`).join('')}
       </div>
+      ${collView === 'locked' ? `<div class="coll-note">These are the players you have not pulled yet, best first. Open packs to unlock them.</div>` : ''}
       <div class="collection-grid">
         ${filtered.length === 0
-          ? `<div class="empty-state"><div class="empty-icon">${icon('layers',48)}</div><h3>NO CARDS YET</h3><p>Complete lessons to earn packs!</p></div>`
-          : filtered.map(pl => buildCard(pl)).join('')}
+          ? (collView === 'locked'
+              ? `<div class="empty-state"><div class="empty-icon">${icon('trophy',48)}</div><h3>ALL UNLOCKED</h3><p>You own every player${collFilter ? ' in this tier' : ''}.</p></div>`
+              : `<div class="empty-state"><div class="empty-icon">${icon('layers',48)}</div><h3>NO CARDS YET</h3><p>Clear a daily drill or win a playoff round to earn a pack.</p></div>`)
+          : shown.map(pl => collView === 'locked' ? `<div class="locked-card">${buildCard(pl)}<div class="lock-badge">${icon('lock', 22)}</div></div>` : buildCard(pl)).join('')}
       </div>
+      ${collView === 'locked' && filtered.length > shown.length ? `<div style="text-align:center;margin-top:18px"><button class="btn btn-secondary" onclick="collLimit += 60; renderCollection()">Show more (${filtered.length - shown.length} left)</button></div>` : ''}
     </div>`;
+}
+
+function setCollView(view) {
+  collView = view;
+  collLimit = 60;
+  renderCollection();
 }
 
 function setCollFilter(r, btn) {
   collFilter = r;
-  document.querySelectorAll('.coll-filter .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  collLimit = 60;
   renderCollection();
-}
-
-// ── SEASON PAGE ───────────────────────────────────────────────────
-
-function renderSeason() {
-  const v  = document.getElementById('view-season');
-  const sp = getSeasonProgress(AppState);
-  const stages = [
-    { name:'TRAINING CAMP', desc:'Learn the fundamentals — C, Pointers, Memory', icon:'dumbbell', chId:'ch1' },
-    { name:'SEASON OPENER', desc:'Processes, threads, and synchronization', icon:'cpu', chId:'ch2' },
-    { name:'MID-SEASON', desc:'Master the file system', icon:'folder', chId:'ch3' },
-    { name:'PLAYOFFS', desc:'Networking — sockets and IPC', icon:'globe', chId:'ch4' },
-    { name:'CHAMPIONSHIP', desc:'Complete IPC mastery — shared memory', icon:'trophy', chId:'ch5' },
-  ];
-
-  v.innerHTML = `
-    <div class="topbar">
-      <div class="topbar-title">SEASON PROGRESS</div>
-    </div>
-    <div class="page-wrap">
-      <div class="page-hdr">
-        <h2>SEASON 01</h2>
-        <p>ROAD TO THE CHAMPIONSHIP</p>
-      </div>
-      <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
-        <div class="stat-pill"><div class="stat-num">${sp.doneLessons}</div><div class="stat-lbl">Lessons Done</div></div>
-        <div class="stat-pill"><div class="stat-num">${sp.doneChapters}</div><div class="stat-lbl">Chapters</div></div>
-        <div class="stat-pill"><div class="stat-num">${AppState.stats.gamesPlayed}</div><div class="stat-lbl">Games Played</div></div>
-        <div class="stat-pill"><div class="stat-num">${AppState.stats.gamesWon}</div><div class="stat-lbl">Wins</div></div>
-        <div class="stat-pill"><div class="stat-num">${AppState.stats.packsOpened}</div><div class="stat-lbl">Packs Opened</div></div>
-      </div>
-      <div class="progress-bar" style="height:10px;margin-bottom:24px">
-        <div class="progress-fill" style="width:${Math.round(sp.doneLessons/sp.totalLessons*100)}%"></div>
-      </div>
-      ${stages.map((st, i) => {
-        const ch   = CHAPTERS.find(c => c.id === st.chId);
-        const done = ch && isChapterComplete(AppState, ch);
-        const doneLs = ch ? ch.lessons.filter(l => isLessonDone(AppState, l.id)).length : 0;
-        const isActive = ch && doneLs > 0 && !done;
-        return `<div class="season-stage${done?' done':isActive?' active':''}">
-          <div class="stage-icon">${icon(st.icon,36)}</div>
-          <div class="stage-info">
-            <div class="stage-name">${st.name}</div>
-            <div class="stage-desc">${st.desc}</div>
-            ${ch ? `<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
-              ${done?'<span class="tag ok">✓ COMPLETE</span>':''}
-              ${!done && ch ? `<span style="font-size:13px;color:var(--dim)">${doneLs}/${ch.lessons.length} lessons</span>`:''}
-            </div>` : ''}
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-            ${done
-              ? `<button class="btn btn-secondary btn-sm" onclick="showGameDay('${st.chId}')">Game Day</button>`
-              : `<button class="btn btn-primary btn-sm" onclick="showChapter('${st.chId}');navigate('learn')">Train →</button>`}
-            ${done ? '<span class="tag ok">CLEARED</span>' : ''}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`;
 }
 
 // ── BOOT ──────────────────────────────────────────────────────────

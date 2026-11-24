@@ -87,31 +87,51 @@ function genStarterTeam() {
   });
 }
 
-// Weighted tier odds per pack; tiers with no players are skipped.
+// Packs hold 5 cards. Each pack type rolls its cards from weighted tiers, and one "hit" card is guaranteed
+// to be at least the pack's minimum tier. Better packs shift every roll upward. A pack never holds one tier only.
 const PACK_ODDS = {
   'Bronze Pack':     { 'Rookie':50, 'Bench Player':35, 'Starter':12, 'Sixth Man':3 },
   'Silver Pack':     { 'Bench Player':25, 'Starter':40, 'Sixth Man':25, 'All-Star':10 },
   'Gold Pack':       { 'Starter':15, 'Sixth Man':35, 'All-Star':35, 'Superstar':13, 'MVP':2 },
   'Diamond Premium': { 'All-Star':25, 'Superstar':40, 'MVP':25, 'Hall of Fame':10 },
 };
+const PACK_MIN_TIER = { 'Bronze Pack':'Bench Player', 'Silver Pack':'Starter', 'Gold Pack':'All-Star', 'Diamond Premium':'Superstar' };
+const PACK_SIZE = 5;
+const PACK_ORDER = ['Bronze Pack', 'Silver Pack', 'Gold Pack', 'Diamond Premium'];
 
-function genPackCard(packType) {
-  const odds = PACK_ODDS[packType] || PACK_ODDS['Bronze Pack'];
-  const live = Object.entries(odds).filter(([tier]) => NBA_PLAYERS.some(p => p.rarity === tier));
+function rollTier(odds, minTier) {
+  const floor = minTier ? TIER_NAMES.indexOf(minTier) : 0;
+  const live = Object.entries(odds).filter(([t]) => TIER_NAMES.indexOf(t) >= floor && NBA_PLAYERS.some(p => p.rarity === t));
   let roll = Math.random() * live.reduce((s, [, w]) => s + w, 0);
-  let tier = live[live.length - 1][0];
-  for (const [t, w] of live) { if ((roll -= w) < 0) { tier = t; break; } }
+  for (const [t, w] of live) { if ((roll -= w) < 0) return t; }
+  return live[live.length - 1][0];
+}
+
+function cardOfTier(tier) {
   const pool = NBA_PLAYERS.filter(p => p.rarity === tier);
   const template = pool[Math.floor(Math.random() * pool.length)];
-  return { ...template, id: 'card_' + Date.now() + '_' + Math.floor(Math.random()*9999) };
+  return { ...template, id: 'card_' + Date.now() + '_' + Math.floor(Math.random() * 99999) };
+}
+
+// Returns PACK_SIZE cards, weakest first so the best one is revealed last.
+function genPack(packType) {
+  const odds = PACK_ODDS[packType] || PACK_ODDS['Bronze Pack'];
+  const tiers = [];
+  for (let i = 0; i < PACK_SIZE - 1; i++) tiers.push(rollTier(odds));
+  tiers.push(rollTier(odds, PACK_MIN_TIER[packType]));
+  if (tiers.every(t => t === tiers[0])) {          // mixed tiers: lift the hit card one tier if it would match the rest
+    const up = Object.keys(odds).find(t => TIER_NAMES.indexOf(t) > TIER_NAMES.indexOf(tiers[0]) && NBA_PLAYERS.some(p => p.rarity === t));
+    if (up) tiers[tiers.length - 1] = up;
+  }
+  return tiers.map(cardOfTier).sort((a, b) => TIER_NAMES.indexOf(a.rarity) - TIER_NAMES.indexOf(b.rarity) || a.ovr - b.ovr);
 }
 
 // ── COURSE CONTENT ──────────────────────────────────────────────
 
 const CHAPTERS = [
 {
-  id:'ch1', num:'01', title:'Training Camp', subtitle:'C Fundamentals',
-  icon:'dumbbell', color:'#CD7F32', packReward:'Bronze Pack',
+  id:'ch1', num:'01', title:'C Fundamentals', subtitle:'Pointers and memory',
+  icon:'dumbbell', color:'#CD7F32',
   lessons:[
   {
     id:'l1_1', title:'Pointers & Memory',
@@ -233,8 +253,8 @@ valgrind --leak-check=full ./prog
   ]
 },
 {
-  id:'ch2', num:'02', title:'Season Opener', subtitle:'Processes & Threads',
-  icon:'cpu', color:'#C0C0C0', packReward:'Silver Pack',
+  id:'ch2', num:'02', title:'Processes & Threads', subtitle:'fork, mutexes, semaphores',
+  icon:'cpu', color:'#C0C0C0',
   lessons:[
   {
     id:'l2_1', title:'Processes',
@@ -502,8 +522,8 @@ pthread_mutex_unlock(&amp;mtx);</div>
   ]
 },
 {
-  id:'ch3', num:'03', title:'Mid-Season', subtitle:'File Systems',
-  icon:'folder', color:'#FFD700', packReward:'Gold Pack',
+  id:'ch3', num:'03', title:'File Systems & I/O', subtitle:'Descriptors, inodes, buffering',
+  icon:'folder', color:'#FFD700',
   lessons:[
   {
     id:'l3_1', title:'File I/O System Calls',
@@ -636,8 +656,8 @@ closedir(dir);</div>
   ]
 },
 {
-  id:'ch4', num:'04', title:'Playoffs', subtitle:'Networking',
-  icon:'globe', color:'#B9F2FF', packReward:'Gold Pack',
+  id:'ch4', num:'04', title:'Networking', subtitle:'Sockets, servers, epoll',
+  icon:'globe', color:'#B9F2FF',
   lessons:[
   {
     id:'l4_1', title:'Sockets & Server Flow',
@@ -770,8 +790,8 @@ while (1) {
   ]
 },
 {
-  id:'ch5', num:'05', title:'Championship', subtitle:'IPC',
-  icon:'trophy', color:'#9B59B6', packReward:'Diamond Premium',
+  id:'ch5', num:'05', title:'Inter-Process Communication', subtitle:'Pipes, shared memory, mmap',
+  icon:'share-2', color:'#9B59B6',
   lessons:[
   {
     id:'l5_1', title:'Pipes & FIFOs',
