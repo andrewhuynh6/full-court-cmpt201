@@ -448,6 +448,47 @@ code   { font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace; 
 .empty-state h3 { font-size: 28px; color: var(--white); letter-spacing: 1px; }
 .empty-state p  { font-size: 16px; margin-top: 8px; }
 
+/* ── LESSON STEPS ────────────────────────────────────────────── */
+
+.step-wrap { max-width: 760px; }
+.step-top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.step-count { font-size: 14px; font-weight: 600; color: var(--dim); white-space: nowrap; }
+.step-bar { flex: 1; margin-top: 0; }
+.step-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 28px; box-shadow: var(--shadow); max-width: none; }
+.step-card h3 { margin-top: 0 !important; font-size: 24px; }
+.step-check { margin-top: 26px; padding-top: 22px; border-top: 1px dashed var(--border); }
+.step-check-label { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ball-text); margin-bottom: 8px; }
+.step-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.step-check .mcq-q-text .code-block, .mcq-q-text .code-block { margin: 12px 0 4px; font-weight: 400; }
+
+/* ── VISUALIZATIONS ──────────────────────────────────────────── */
+
+.viz { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin: 18px 0 8px; }
+.viz-title { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+.viz svg { width: 100%; height: auto; display: block; max-height: 360px; }
+.viz-hint { display: none; font-size: 13px; color: var(--dim); margin: -4px 0 8px; }
+.viz-stage { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.viz-cap { min-height: 3.2em; margin-top: 12px; font-size: 15.5px; line-height: 1.55; font-weight: 500; color: var(--white); }
+.viz-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.viz-count { margin-left: auto; font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.vz-t { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: var(--text); }
+.vz-t.s { font-size: 12.5px; font-weight: 500; fill: var(--dim); }
+.vz-t.b { font-weight: 700; fill: var(--white); }
+.vz-t.m { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-weight: 500; font-size: 13.5px; }
+.vz-t.a { fill: var(--ball-text); }
+.vz-t.ok { fill: var(--ok); }
+.vz-t.bad { fill: var(--bad); }
+.vz-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; transition: fill .2s; }
+.vz-box.a { fill: var(--ball2); stroke: var(--ball); }
+.vz-box.ok { fill: rgba(21,128,61,.12); stroke: var(--ok); }
+.vz-box.bad { fill: rgba(185,28,28,.10); stroke: var(--bad); }
+.vz-box.dim { opacity: .55; stroke-dasharray: 5 4; }
+.vz-line { stroke: var(--dim); stroke-width: 2.2; fill: none; }
+.vz-line.a { stroke: var(--ball); }
+.vz-line.b { stroke: var(--bad); }
+.vz-line.ok { stroke: var(--ok); }
+.vz-mk-n { fill: var(--dim); } .vz-mk-a { fill: var(--ball); } .vz-mk-b { fill: var(--bad); } .vz-mk-ok { fill: var(--ok); }
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 
 @media (max-width: 1000px) {
@@ -531,5 +572,12 @@ code   { font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace; 
   .sb-pts  { font-size: 42px; }
   .sb-name { font-size: 18px; }
 
+  .step-card { padding: 18px; }
+  .step-card h3 { font-size: 21px; }
+  .viz { padding: 12px; }
+  .viz-hint { display: block; }
+  .viz svg { min-width: 600px; }
+  .viz-cap { font-size: 15px; }
+  .step-nav .btn { flex: 1; }
   .xp-popup { top: auto; bottom: 84px; right: 12px; left: 12px; justify-content: center; }
 }

@@ -5,7 +5,25 @@ let currentStage  = 'learn'; // 'learn' | 'practice' | 'quiz'
 let currentChapter = null;
 
 // MCQ state
-let mcq = { q: 0, answered: false, score: 0, done: false, questions: [] };
+let mcq = { q: 0, answered: false, score: 0, done: false, questions: [], source: null };
+
+// Step-by-step lesson state (reset per lesson)
+let currentStep = 0;
+let stepState = { passed: {}, q: {} };
+
+// Shuffle options at runtime so the right answer is not always in the same slot.
+function shuffleQuestion(q) {
+  const idx = q.opts.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return { ...q, opts: idx.map(i => q.opts[i]), ans: idx.indexOf(q.ans) };
+}
+
+function qBody(q) {
+  return q.q + (q.code ? `<div class="code-block">${q.code}</div>` : '');
+}
 
 function showLearnView() {
   renderChapterList();
@@ -93,6 +111,9 @@ function showLesson(lessonId) {
   if (navLearn) navLearn.classList.add('active');
   window.scrollTo(0, 0);
 
+  currentStep = 0;
+  stepState = { passed: {}, q: {} };
+  mcq = { q: 0, answered: false, score: 0, done: false, questions: [], source: null };
   currentStage = 'learn';
   if (isLearnDone(AppState, lessonId)) currentStage = 'practice';
   if (isPracticeDone(AppState, lessonId)) currentStage = 'quiz';
@@ -145,6 +166,84 @@ function renderStage() {
 }
 
 function renderLearnStage(sc) {
+  if (currentLesson.steps && currentLesson.steps.length) { renderStepsStage(sc); return; }
+  renderLegacyLearn(sc);
+}
+
+function renderStepsStage(sc) {
+  const steps = currentLesson.steps;
+  const n = steps.length, s = steps[currentStep];
+  const last = currentStep === n - 1;
+  const done = isLearnDone(AppState, currentLesson.id);
+  const passed = !s.check || stepState.passed[currentStep];
+  if (s.check && !stepState.q[currentStep]) stepState.q[currentStep] = shuffleQuestion(s.check);
+  const chk = s.check ? stepState.q[currentStep] : null;
+  const letters = ['A', 'B', 'C', 'D'];
+  const nextLabel = last ? (done ? 'Go to Practice →' : `Finish lesson (+${XP_REWARDS.learn} XP)`) : 'Next →';
+  sc.innerHTML = `<div class="step-wrap">
+    <div class="step-top">
+      <span class="step-count">Step ${currentStep + 1} of ${n}</span>
+      <div class="progress-bar step-bar"><div class="progress-fill" style="width:${Math.round((currentStep + (passed ? 1 : 0)) / n * 100)}%"></div></div>
+    </div>
+    <div class="learn-content step-card">
+      <h3>${s.title}</h3>
+      ${expandIcons(s.html)}
+      ${s.viz ? `<div data-viz="${s.viz}"></div>` : ''}
+      ${chk ? `<div class="step-check">
+        <div class="step-check-label">Quick check</div>
+        <div class="mcq-q-text">${qBody(chk)}</div>
+        <div class="mcq-opts" id="step-opts">
+          ${chk.opts.map((o, i) => `<button class="mcq-opt${stepState.passed[currentStep] && i === chk.ans ? ' cor' : ''}" ${stepState.passed[currentStep] ? 'disabled' : ''} onclick="answerStep(${i})"><span class="mcq-ol">${letters[i]}</span><span>${o}</span></button>`).join('')}
+        </div>
+        <div id="step-fb">${stepState.passed[currentStep] ? `<div class="mcq-fb c">✓ ${chk.exp}</div>` : ''}</div>
+      </div>` : ''}
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-secondary" onclick="stepBack()" ${currentStep === 0 ? 'disabled' : ''}>← Back</button>
+      <button class="btn btn-primary" id="step-next" onclick="stepNext()" ${passed ? '' : 'disabled'}>${nextLabel}</button>
+    </div>
+  </div>`;
+  VIZ.mountAll(sc);
+}
+
+function answerStep(i) {
+  const chk = stepState.q[currentStep];
+  if (!chk || stepState.passed[currentStep]) return;
+  const opts = document.querySelectorAll('#step-opts .mcq-opt');
+  const fb = document.getElementById('step-fb');
+  if (i === chk.ans) {
+    stepState.passed[currentStep] = true;
+    opts.forEach(o => { o.disabled = true; });
+    opts[i].classList.add('cor');
+    fb.innerHTML = `<div class="mcq-fb c">✓ ${chk.exp}</div>`;
+    document.getElementById('step-next').disabled = false;
+    const bar = document.querySelector('.step-bar .progress-fill');
+    if (bar) bar.style.width = Math.round((currentStep + 1) / currentLesson.steps.length * 100) + '%';
+  } else {
+    opts[i].classList.add('wrg');
+    opts[i].disabled = true;
+    fb.innerHTML = `<div class="mcq-fb w">Not quite. ${chk.hint || 'Re-read this step and try another answer.'}</div>`;
+  }
+}
+
+function stepNext() {
+  const steps = currentLesson.steps;
+  if (currentStep < steps.length - 1) {
+    currentStep++;
+    renderStage();
+    window.scrollTo(0, 0);
+  } else if (isLearnDone(AppState, currentLesson.id)) {
+    switchStage('practice');
+  } else {
+    completeLearn();
+  }
+}
+
+function stepBack() {
+  if (currentStep > 0) { currentStep--; renderStage(); window.scrollTo(0, 0); }
+}
+
+function renderLegacyLearn(sc) {
   const id   = currentLesson.id;
   const done = isLearnDone(AppState, id);
   sc.innerHTML = `
@@ -170,32 +269,36 @@ function completeLearn() {
   setTimeout(() => switchStage('practice'), 400);
 }
 
+function newMCQ(questions) {
+  return { q: 0, answered: false, score: 0, done: false, source: questions, questions: questions.map(shuffleQuestion) };
+}
+
 function renderMCQ(sc, questions, mode) {
   const id   = currentLesson.id;
   const done = mode === 'practice' ? isPracticeDone(AppState, id) : isQuizDone(AppState, id);
-  if (done && !mcq.done) {
-    mcq = { q: 0, answered: false, score: 0, done: false, questions };
-    // Show already-completed message with option to replay
-    sc.innerHTML = `<div class="mcq-wrap">
-      <div style="text-align:center;padding:32px 20px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--ok)">✓</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--white);letter-spacing:1px">ALREADY COMPLETED</div>
-        <div style="font-size:12px;color:var(--dim);margin-top:6px;margin-bottom:20px">XP already earned. Replay for practice?</div>
-        <button class="btn btn-secondary" onclick="startMCQReplay(${JSON.stringify(questions).replace(/"/g,"'")}, '${mode}')">Replay</button>
-        ${mode==='practice' ? `<button class="btn btn-primary" style="margin-left:10px" onclick="switchStage('quiz')">Go to Quiz →</button>` : ''}
-      </div>
-    </div>`;
-    return;
-  }
-  if (!mcq.questions.length || mcq.questions !== questions) {
-    mcq = { q: 0, answered: false, score: 0, done: false, questions };
+  if (mcq.source !== questions) {
+    if (done) {
+      mcq = { q: 0, answered: false, score: 0, done: false, questions: [], source: null };
+      sc.innerHTML = `<div class="mcq-wrap">
+        <div style="text-align:center;padding:32px 20px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--ok)">✓</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--white);letter-spacing:1px">ALREADY COMPLETED</div>
+          <div style="font-size:14px;color:var(--dim);margin-top:6px;margin-bottom:20px">XP already earned. Replay for practice?</div>
+          <button class="btn btn-secondary" onclick="startMCQReplay('${mode}')">Replay</button>
+          ${mode==='practice' ? `<button class="btn btn-primary" style="margin-left:10px" onclick="switchStage('quiz')">Go to Quiz →</button>` : ''}
+        </div>
+      </div>`;
+      return;
+    }
+    mcq = newMCQ(questions);
   }
   if (mcq.done) { renderMCQFinal(sc, mode); return; }
   renderMCQQuestion(sc, mode);
 }
 
-function startMCQReplay(questions, mode) {
-  mcq = { q: 0, answered: false, score: 0, done: false, questions };
+function startMCQReplay(mode) {
+  const src = mode === 'practice' ? currentLesson.practice : currentLesson.quiz;
+  mcq = newMCQ(src);
   renderStage();
 }
 
@@ -209,7 +312,7 @@ function renderMCQQuestion(sc, mode) {
       <div class="mcq-qnum">${mcq.q+1}/${mcq.questions.length}</div>
     </div>
     <div class="mcq-question">
-      <div class="mcq-q-text">Q${mcq.q+1}. ${q.q}</div>
+      <div class="mcq-q-text">Q${mcq.q+1}. ${qBody(q)}</div>
       <div class="mcq-opts" id="mcq-opts">
         ${q.opts.map((o,i) => `<button class="mcq-opt" id="mop${i}" onclick="answerMCQ(${i},'${mode}')">
           <span class="mcq-ol">${letters[i]}</span><span>${o}</span>
@@ -286,7 +389,7 @@ function renderMCQFinal(sc, mode) {
       <div class="final-grade ${grade}">${msg}</div>
       <div class="final-xp-earned">+${xpEarned} XP EARNED</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-secondary" onclick="startMCQReplay(null,'${mode}')">Try Again</button>
+        <button class="btn btn-secondary" onclick="startMCQReplay('${mode}')">Try Again</button>
         ${mode==='practice'
           ? `<button class="btn btn-primary" onclick="switchStage('quiz')">Go to Quiz →</button>`
           : `<button class="btn btn-gold" onclick="showChapter('${currentChapter.id}')">Back to Chapter</button>`}
@@ -318,7 +421,7 @@ function showGameDay(chId) {
   // Build question pool from all chapter lessons
   const pool = [];
   ch.lessons.forEach(l => pool.push(...l.quiz));
-  const shuffled = pool.sort(() => Math.random()-.5).slice(0, 10);
+  const shuffled = pool.sort(() => Math.random()-.5).slice(0, 10).map(shuffleQuestion);
   gameState = { pts: 0, opp: Math.floor(Math.random()*30+50), q: 0, answered: false, questions: shuffled, chapterId: chId, done: false };
   renderGameDayQuestion();
 }
@@ -367,7 +470,7 @@ function renderGameDayQuestion() {
       <div class="progress-bar" style="flex:1;height:6px"><div class="progress-fill" style="width:${((gameState.q)/gameState.questions.length*100)}%"></div></div>
     </div>
     <div class="mcq-question">
-      <div class="mcq-q-text">Q${gameState.q+1}. ${q.q}</div>
+      <div class="mcq-q-text">Q${gameState.q+1}. ${qBody(q)}</div>
       <div class="mcq-opts" id="gd-opts">
         ${q.opts.map((o,i) => `<button class="mcq-opt" id="gdop${i}" onclick="answerGameDay(${i})">
           <span class="mcq-ol">${letters[i]}</span><span>${o}</span>
