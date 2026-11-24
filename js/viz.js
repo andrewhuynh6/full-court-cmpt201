@@ -338,7 +338,7 @@ const VIZ = (() => {
       if (n >= 3) o += line(CX - 8, 170, SX + 8, 170, 'a') + t(320, 164, 'SYN', 's a') + line(SX + 8, 190, CX - 8, 190, 'a') + t(320, 184, 'SYN-ACK', 's a') + line(CX - 8, 210, SX + 8, 210, 'a') + t(320, 204, 'ACK', 's a');
       if (n >= 4) o += sv(232, 'accept() → fd 4', 'ok');
       if (n >= 5) o += line(CX - 8, 258, SX + 8, 258, 'ok') + t(320, 252, 'write("hello")', 's ok') + sv(280, 'read(4) → "hello"');
-      if (n >= 6) o += line(SX + 8, 296, CX - 8, 296, 'ok') + t(320, 290, 'write("hi!")', 's ok') + cl(310, 'read() → "hi!"');
+      if (n >= 6) o += line(SX + 8, 296, CX - 8, 296, 'ok') + t(400, 290, 'write("hi!")', 's ok') + cl(310, 'read() → "hi!"');
       return { svg: o, cap };
     };
     return [
@@ -360,7 +360,7 @@ const VIZ = (() => {
     }).join('');
     const f = (srv, cap) => ({ svg: cli(srv.hi, srv.waiting) + srv.svg, cap });
     return [
-      f({ waiting: 1, hi: 0, svg: box(60, 90, 250, 90, 'a') + t(185, 122, 'One server process', 'b') + t(185, 148, 'serving Client A only', 'm') + line(310, 130, 500, 55, 'ok') + t(405, 230, 'B and C wait: the server is stuck in read() for A', 's bad') },
+      f({ waiting: 1, hi: 0, svg: box(60, 90, 250, 90, 'a') + t(185, 122, 'One server process', 'b') + t(185, 148, 'serving Client A only', 'm') + line(310, 130, 500, 55, 'ok') + t(185, 212, 'B and C wait:', 's bad') + t(185, 232, 'server is stuck in read() for A', 's bad') },
         'One process, one client at a time. While it blocks in read() for A, B and C cannot even connect.'),
       f({ hi: -1, svg: box(40, 20, 170, 60, 'a') + t(125, 46, 'Parent', 'b') + t(125, 66, 'accept() loop', 'm') +
         [0, 1, 2].map(i => box(280, 30 + i * 80, 130, 50, 'ok') + t(345, 60 + i * 80, 'Child ' + 'ABC'[i], 'b') + line(210, 60, 280, 55 + i * 80, 'n') + line(410, 55 + i * 80, 500, 55 + i * 80, 'ok')).join('') +
@@ -443,7 +443,7 @@ const VIZ = (() => {
     let i = 0, timer = null;
     el.innerHTML = `<div class="viz">
       <div class="viz-title">${def.title}</div>
-      <div class="viz-hint">Swipe sideways to see the whole diagram</div>
+      <button class="btn btn-secondary btn-sm viz-expand" data-a="expand">Full screen</button>
       <div class="viz-stage"><svg viewBox="${def.vb}" role="img" aria-label="${def.title}"><defs>${defs}</defs><g class="vz-g"></g></svg></div>
       <div class="viz-cap" aria-live="polite"></div>
       <div class="viz-ctl">
@@ -477,6 +477,18 @@ const VIZ = (() => {
           i++; draw();
         }, 2400);
       }
+    });
+    el.querySelector('.viz-expand').addEventListener('click', () => {
+      const viz = el.querySelector('.viz');
+      const ov = document.createElement('div');
+      ov.className = 'viz-full';
+      ov.innerHTML = '<button class="btn btn-secondary btn-sm viz-full-close">Close</button>';
+      const close = () => { el.appendChild(viz); ov.remove(); window.removeEventListener('keydown', onKey); };
+      const onKey = e => { if (e.key === 'Escape') close(); };
+      ov.querySelector('button').addEventListener('click', close);
+      window.addEventListener('keydown', onKey);
+      ov.appendChild(viz);
+      document.body.appendChild(ov);
     });
     draw(true);
   }
