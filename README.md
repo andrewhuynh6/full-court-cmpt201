@@ -1,4 +1,4 @@
-# FULL COURT — CMPT 201 Learning Game 
+# CMPT201 Lab — a game-style study app for SFU CMPT 201 
 
 A basketball-themed educational web app for CMPT 201 (Systems Programming). Learn, earn player cards, and build your team.
 

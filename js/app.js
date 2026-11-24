@@ -25,8 +25,8 @@ function buildLayout() {
     <aside class="sidebar">
       <div class="sidebar-logo">
         <div class="logo-words">
-          <div class="logo-text">FULL COURT</div>
-          <div class="logo-sub">CMPT 201</div>
+          <div class="logo-text">CMPT201 LAB</div>
+          <div class="logo-sub">STUDY GAME</div>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark" aria-label="Toggle light/dark theme">${icon('moon',18)}</button>
       </div>
@@ -153,7 +153,7 @@ function renderDashboard() {
 
   v.innerHTML = `
     <div class="topbar">
-      <div class="topbar-title">FULL COURT</div>
+      <div class="topbar-title">CMPT201 LAB</div>
       <div class="topbar-actions">
         ${AppState.packQueue.length > 0
           ? `<button class="btn btn-gold btn-sm" onclick="openPack(0)">Open Pack (${AppState.packQueue.length})</button>`
