@@ -194,4 +194,6 @@ function finishExam(timeUp) {
       </div>
     </div></div>`;
   window.scrollTo(0, 0);
+  countUp(document.querySelector('.final-score'));
+  if (passed) celebrate();
 }

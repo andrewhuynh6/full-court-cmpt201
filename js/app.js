@@ -165,6 +165,7 @@ function renderDashboard() {
 
         <!-- Profile -->
         <div class="panel hero db-span3">
+          <svg class="court-art" viewBox="0 0 300 200" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="296" height="196" rx="6"/><rect x="100" y="2" width="100" height="112"/><path d="M100 114a50 50 0 0 0 100 0"/><path d="M100 114a50 50 0 0 1 100 0" stroke-dasharray="6 6"/><path d="M36 2v38a114 114 0 0 0 228 0V2"/><circle cx="150" cy="30" r="9"/><path d="M130 16h40"/></svg>
           <div class="profile-panel">
             <div class="profile-info" style="flex:1;min-width:0">
               <div class="level">LVL ${p.level} · SEASON 01</div>

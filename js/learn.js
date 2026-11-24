@@ -9,7 +9,7 @@ let mcq = { q: 0, answered: false, score: 0, done: false, questions: [], source:
 
 // Step-by-step lesson state (reset per lesson)
 let currentStep = 0;
-let stepState = { passed: {}, q: {} };
+let stepState = { passed: {}, q: {}, max: 0 };
 
 // Shuffle options at runtime so the right answer is not always in the same slot.
 function shuffleQuestion(q) {
@@ -130,10 +130,12 @@ function renderChapterList() {
       </div>
       ${reviewBannerHtml()}
       ${examCardHtml()}
+      <div class="chapter-map">
       ${CHAPTERS.map(ch => {
         const done = isChapterComplete(AppState, ch);
+        const isCurrent = !done && CHAPTERS.find(c => !isChapterComplete(AppState, c)) === ch;
         const doneLessons = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
-        return `<div class="chapter-item${done?' done':''}" onclick="showChapter('${ch.id}')">
+        return `<div class="chapter-item${done?' done':''}${isCurrent?' current':''}" onclick="showChapter('${ch.id}')">
           <div class="chapter-num">${ch.num}</div>
           <div class="chapter-info">
             <div class="chapter-title">${icon(ch.icon,20)} ${ch.title}</div>
@@ -144,6 +146,7 @@ function renderChapterList() {
           <div class="chapter-arrow">${done ? '✓' : '›'}</div>
         </div>`;
       }).join('')}
+      </div>
     </div>`;
 }
 
@@ -200,7 +203,7 @@ function showLesson(lessonId) {
   window.scrollTo(0, 0);
 
   currentStep = 0;
-  stepState = { passed: {}, q: {} };
+  stepState = { passed: {}, q: {}, max: 0 };
   mcq = { q: 0, answered: false, score: 0, done: false, questions: [], source: null };
   currentStage = 'learn';
   if (isLearnDone(AppState, lessonId)) currentStage = 'practice';
@@ -268,7 +271,12 @@ function renderStepsStage(sc) {
   const chk = s.check ? stepState.q[currentStep] : null;
   const letters = ['A', 'B', 'C', 'D'];
   const nextLabel = last ? (done ? 'Go to Practice →' : `Finish lesson (+${XP_REWARDS.learn} XP)`) : 'Next →';
-  sc.innerHTML = `<div class="step-wrap">
+  stepState.max = Math.max(stepState.max || 0, currentStep);
+  const outline = steps.map((st, i) => {
+    const cls = i === currentStep ? 'current' : i < stepState.max ? 'done' : i === stepState.max ? '' : 'locked';
+    return `<button class="outline-item ${cls}" ${i > stepState.max ? 'disabled' : ''} onclick="gotoStep(${i})"><span class="oi-dot">${i < stepState.max && i !== currentStep ? '✓' : i + 1}</span><span class="oi-title">${st.title}</span></button>`;
+  }).join('');
+  sc.innerHTML = `<div class="step-layout"><aside class="step-outline" aria-label="Lesson steps"><div class="step-label" style="margin-top:0">In this lesson</div>${outline}</aside><div class="step-wrap">
     <div class="step-top">
       <span class="step-count">Step ${currentStep + 1} of ${n}</span>
       <div class="progress-bar step-bar"><div class="progress-fill" style="width:${Math.round((currentStep + (passed ? 1 : 0)) / n * 100)}%"></div></div>
@@ -294,7 +302,7 @@ function renderStepsStage(sc) {
       <button class="btn btn-secondary" onclick="stepBack()" ${currentStep === 0 ? 'disabled' : ''}>← Back</button>
       <button class="btn btn-primary" id="step-next" onclick="stepNext()" ${passed ? '' : 'disabled'}>${nextLabel}</button>
     </div>
-  </div>`;
+  </div></div>`;
   VIZ.mountAll(sc);
 }
 
@@ -331,6 +339,10 @@ function stepNext() {
   }
 }
 
+function gotoStep(i) {
+  if (i <= stepState.max && i !== currentStep) { currentStep = i; renderStage(); window.scrollTo(0, 0); }
+}
+
 function stepBack() {
   if (currentStep > 0) { currentStep--; renderStage(); window.scrollTo(0, 0); }
 }
@@ -356,6 +368,7 @@ function completeLearn() {
   checkChapterComplete();
   saveState(AppState);
   showXPPopup(XP_REWARDS.learn);
+  celebrate();
   updateSidebar();
   renderLesson();
   setTimeout(() => switchStage('practice'), 400);
@@ -449,6 +462,7 @@ function nextMCQ(mode) {
     checkChapterComplete();
     saveState(AppState);
     if (xpEarned) showXPPopup(xpEarned);
+    if (mcq.score === mcq.questions.length) celebrate();
     updateSidebar();
     renderMCQFinal(sc, mode);
   }
@@ -472,6 +486,7 @@ function renderMCQFinal(sc, mode) {
       </div>
     </div>
   </div>`;
+  countUp(document.querySelector('.final-score'));
 }
 
 function checkChapterComplete() {
