@@ -461,6 +461,18 @@ code   { font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace; 
 .step-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
 .step-check .mcq-q-text .code-block, .mcq-q-text .code-block { margin: 12px 0 4px; font-weight: 400; }
 
+.step-kicker { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+.step-label { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ball-text); margin: 18px 0 8px; }
+.learn-content .lead { font-size: 19px; line-height: 1.65; color: var(--white); font-weight: 500; }
+.step-trace { margin: 18px 0; padding: 14px 18px; border-radius: var(--r-md); background: var(--panel2); border: 1px solid var(--line); }
+.step-trace .step-label { margin-top: 0; }
+.step-trace p { margin: 0; font-size: 15.5px; line-height: 1.8; }
+.tip-box.mistake { background: rgba(185,28,28,.07); border-left-color: var(--bad); }
+.tip-box.mistake .icon { color: var(--bad); }
+.recap-list { list-style: none; padding: 0; margin: 0; }
+.recap-list li { position: relative; padding: 10px 14px 10px 40px; margin-bottom: 8px; background: var(--panel2); border-radius: var(--r-sm); font-size: 16px; }
+.recap-list li::before { content: '✓'; position: absolute; left: 14px; top: 9px; color: var(--ok); font-weight: 700; }
+
 /* ── VISUALIZATIONS ──────────────────────────────────────────── */
 
 .viz { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin: 18px 0 8px; }

@@ -186,9 +186,13 @@ function renderStepsStage(sc) {
       <div class="progress-bar step-bar"><div class="progress-fill" style="width:${Math.round((currentStep + (passed ? 1 : 0)) / n * 100)}%"></div></div>
     </div>
     <div class="learn-content step-card">
+      <div class="step-kicker">${s.kind === 'intro' ? 'Start here' : s.kind === 'recap' ? 'Lesson complete' : 'Concept'}</div>
       <h3>${s.title}</h3>
       ${expandIcons(s.html)}
       ${s.viz ? `<div data-viz="${s.viz}"></div>` : ''}
+      ${s.trace ? `<div class="step-trace"><div class="step-label">Trace it</div><p>${s.trace}</p></div>` : ''}
+      ${s.why ? `<div class="tip-box">{{i:lightbulb}}<strong>Why it matters:</strong> ${s.why}</div>`.replace(/\{\{i:([a-z-]+)\}\}/g, (m, n) => icon(n, 18)) : ''}
+      ${s.mistake ? `<div class="tip-box mistake">{{i:triangle-alert}}<strong>Common mistake:</strong> ${s.mistake}</div>`.replace(/\{\{i:([a-z-]+)\}\}/g, (m, n) => icon(n, 18)) : ''}
       ${chk ? `<div class="step-check">
         <div class="step-check-label">Quick check</div>
         <div class="mcq-q-text">${qBody(chk)}</div>
