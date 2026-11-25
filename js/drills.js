@@ -4,15 +4,15 @@
 
 const DRILLS = [
   { id: 'warmup',  title: 'Warm-up shots',     icon: 'target',         pack: 'Bronze Pack',     n: 5,  need: 3, types: ['mcq'],
-    desc: '5 multiple-choice questions. Get 3 right.' },
+    what: 'multiple-choice questions' },
   { id: 'cleanup', title: 'Fix your mistakes', icon: 'triangle-alert', pack: 'Silver Pack',     n: 4,  need: 3, source: 'review',
-    desc: 'Re-answer questions you missed before. Get 3 of 4 right.' },
+    what: 'questions you missed before (topped up with practice questions if you have few)' },
   { id: 'handson', title: 'Film study',        icon: 'dribbble',       pack: 'Silver Pack',     n: 4,  need: 3, types: ['bug', 'blank', 'order'],
-    desc: 'Find the bug, fill the blank, put lines in order. Get 3 of 4.' },
+    what: 'hands-on questions: find the bug, fill the blank, put lines in order' },
   { id: 'written', title: 'Free throws',       icon: 'zap',            pack: 'Gold Pack',       n: 2,  need: 2, types: ['short'],
-    desc: 'Write 2 short answers, then grade yourself. Cover most key points in both.' },
+    what: 'short answers to write, then grade yourself against the key points' },
   { id: 'speed',   title: 'Two-minute drill',  icon: 'gem',            pack: 'Diamond Premium', n: 10, need: 9, minutes: 4, types: ['mcq', 'bug', 'blank', 'order'],
-    desc: '10 mixed questions in 4 minutes. Get 9 right.' },
+    what: 'mixed questions against the clock' },
 ];
 
 let drill = null;
@@ -27,25 +27,36 @@ function drillState() {
 
 function drillDoneCount() { const s = drillState(); return DRILLS.filter(d => s.done[d.id]).length; }
 
-// Questions from lessons whose Learn stage is done.
+// Questions from lessons whose Learn stage is done come first. If there are too few, the drill is topped up from
+// the whole question bank so a drill can always be started.
 function studiedQuestions() {
   return CHAPTERS.flatMap(ch => ch.lessons.filter(l => isLearnDone(AppState, l.id)).flatMap(l => [...(l.practice || []), ...(l.quiz || [])]));
 }
+function allQuestions() {
+  return CHAPTERS.flatMap(ch => ch.lessons.flatMap(l => [...(l.practice || []), ...(l.quiz || [])]));
+}
 
-function drillPool(d) {
-  if (d.source === 'review') return reviewIds().map(id => QUESTION_INDEX[id].q).filter(q => !isSelfGraded(q));
-  return studiedQuestions().filter(q => d.types.includes(q.type || 'mcq'));
+// The questions a drill will use, how many, and how many you must get right.
+function drillPlan(d) {
+  const okType = q => (d.types || ['mcq', 'bug', 'blank', 'order']).includes(q.type || 'mcq');
+  let pool = d.source === 'review' ? reviewIds().map(id => QUESTION_INDEX[id].q).filter(q => !isSelfGraded(q)) : studiedQuestions().filter(okType);
+  const topped = pool.length < d.n;
+  if (topped) {
+    const have = new Set(pool);
+    pool = [...pool, ...shuffled(allQuestions().filter(q => okType(q) && !have.has(q)))];
+  }
+  const n = Math.max(1, Math.min(d.n, pool.length));
+  const need = Math.max(1, Math.round(d.need / d.n * n));
+  return { pool, n, need, topped };
+}
+
+function drillDesc(d) {
+  const p = drillPlan(d);
+  return `${p.n} ${d.what}. Get ${p.need} right.`;
 }
 
 function drillStatus(d) {
-  const s = drillState();
-  if (s.done[d.id]) return { state: 'done' };
-  const pool = drillPool(d);
-  const need = d.source === 'review' ? 1 : d.n;
-  if (pool.length < need) {
-    return { state: 'locked', reason: d.source === 'review' ? 'Nothing to fix yet. Questions you miss show up here.' : 'Finish the Learn stage of a lesson to unlock.' };
-  }
-  return { state: 'ready' };
+  return { state: drillState().done[d.id] ? 'done' : 'ready' };
 }
 
 function renderDrills() {
@@ -68,10 +79,10 @@ function renderDrills() {
             <div class="drill-ico ${cls}">${icon(d.icon, 26)}</div>
             <div class="drill-info">
               <div class="drill-title">${d.title}</div>
-              <div class="drill-desc">${st.state === 'locked' ? st.reason : d.desc}</div>
+              <div class="drill-desc">${drillDesc(d)}</div>
               <div class="drill-reward"><span class="pack-pill ${cls}">${icon('gift', 14)} ${d.pack}</span>${d.minutes ? `<span class="tag">${d.minutes} min</span>` : ''}</div>
             </div>
-            ${st.state === 'done' ? '<span class="tag ok">CLEARED</span>' : st.state === 'locked' ? `<button class="btn btn-secondary btn-sm" onclick="navigate('learn')">Study</button>` : `<button class="btn btn-primary btn-sm" onclick="startDrill('${d.id}')">Start</button>`}
+            ${st.state === 'done' ? '<span class="tag ok">CLEARED</span>' : `<button class="btn btn-primary btn-sm" onclick="startDrill('${d.id}')">Start</button>`}
           </div>`;
         }).join('')}
       </div>
@@ -82,11 +93,10 @@ function stopDrillTimer() { if (drill && drill.timer) { clearInterval(drill.time
 
 function startDrill(id) {
   const d = DRILLS.find(x => x.id === id);
-  if (!d || drillStatus(d).state !== 'ready') return;
-  const pool = shuffled(drillPool(d));
-  const qs = pool.slice(0, d.n).map(shuffleQuestion);
-  const need = d.source === 'review' ? Math.min(d.need, qs.length) : d.need;
-  drill = { d, qs, need, idx: 0, ok: 0, endsAt: d.minutes ? Date.now() + d.minutes * 60000 : 0, timer: null, finished: false };
+  if (!d || drillStatus(d).state === 'done') return;
+  const plan = drillPlan(d);
+  const qs = (d.source === 'review' ? plan.pool : shuffled(plan.pool)).slice(0, plan.n).map(shuffleQuestion);
+  drill = { d, qs, need: plan.need, idx: 0, ok: 0, endsAt: d.minutes ? Date.now() + d.minutes * 60000 : 0, timer: null, finished: false };
   if (d.minutes) drill.timer = setInterval(drillTick, 500);
   renderDrillQuestion();
 }
