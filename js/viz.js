@@ -504,6 +504,85 @@ const VIZ = (() => {
   }
 
 
+  // ── OS stack: applications, kernel, hardware ───────────────────
+  function osstack() {
+    const layer = (y, name, sub, cls) => box(170, y, 300, 56, cls) + t(320, y + 26, name, 'b') + t(320, y + 46, sub, 's');
+    const base = (a, k, h) => layer(20, 'Applications', 'user mode', a) + layer(100, 'Kernel', 'kernel mode', k) + layer(180, 'Hardware', 'CPU, memory, I/O devices', h);
+    return [
+      { svg: base('', '', ''), cap: 'Three layers: applications on top, the kernel in the middle, the hardware at the bottom.' },
+      { svg: base('a', '', '') + line(320, 76, 320, 100, 'a') + t(470, 94, 'syscall: write()', 'm a', 'start'), cap: 'An application cannot touch the hardware. It asks the kernel through a system call.' },
+      { svg: base('', 'a', 'a') + line(320, 156, 320, 180, 'a') + t(470, 174, 'device driver', 'm a', 'start'), cap: 'The kernel runs in kernel mode with full access. It mediates access and talks to the hardware.' },
+      { svg: base('ok', '', '') + line(320, 100, 320, 76, 'ok') + t(470, 94, 'result returned', 'm ok', 'start'), cap: 'The result comes back to the application. Many apps share the hardware safely because the kernel is in between.' },
+    ];
+  }
+
+  // ── Signals: a child taps its parent on the shoulder ───────────
+  function signalsViz() {
+    const parent = (lines, cls) => box(20, 30, 230, 130, cls) + t(135, 56, 'Parent process', 'b') + lines.map((l, i) => t(135, 86 + i * 24, l[0], 'm ' + (l[1] || ''))).join('');
+    const child = (lines, cls) => box(390, 30, 230, 130, cls) + t(505, 56, 'Child process', 'b') + lines.map((l, i) => t(505, 86 + i * 24, l[0], 'm ' + (l[1] || ''))).join('');
+    const kern = cls => box(270, 190, 100, 44, cls) + t(320, 218, 'kernel', 'b');
+    return [
+      { svg: parent([['sigaction(SIGINT,', 'a'], ['  handler)', 'a'], ['loop: sleep(1)', '']], 'a') + child([['searching for', 's'], ['the golden ticket', 's']], '') + kern(''),
+        cap: 'The parent registers a handler for SIGINT with sigaction(), then loops with sleep().' },
+      { svg: parent([['loop: sleep(1)', '']], '') + child([['found it!', 'ok'], ['kill(getppid(),', 'a'], ['  SIGINT)', 'a']], 'ok') + kern('a') + line(505, 160, 370, 205, 'a'),
+        cap: 'The child found the ticket, so it sends SIGINT to its parent with kill(getppid(), SIGINT).' },
+      { svg: parent([['handler runs:', 'ok'], ['write("Found it!")', 'ok']], 'ok') + child([['(keeps working)', 's']], '') + kern('a') + line(270, 205, 135, 160, 'a'),
+        cap: 'The kernel delivers the signal. The parent pauses its loop at once and runs the handler (using write, which is signal safe).' },
+      { svg: parent([['back in the loop:', ''], ['sleep(1)', '']], 'a') + child([['(keeps working)', 's']], '') + kern(''),
+        cap: 'When the handler returns, the parent resumes where it left off. The signal arrived asynchronously: the parent never asked for it.' },
+    ];
+  }
+
+
+  // ── CPU scheduling Gantt charts ────────────────────────────────
+  function schedViz() {
+    const X0 = 30, U = 35;
+    const cls = { P1: 'a', P2: 'ok', P3: '', P4: 'a' };
+    const gantt = (segs, title, avg) => {
+      let o = t(320, 24, title, 'b');
+      segs.forEach(([p, a, b]) => { o += box(X0 + a * U, 60, (b - a) * U, 44, cls[p], 4) + t(X0 + (a + b) / 2 * U, 88, p, 'b'); });
+      for (let i = 0; i <= 16; i += 2) o += t(X0 + i * U, 128, String(i), 's');
+      o += t(320, 170, avg, 'm b');
+      return o;
+    };
+    const procs = t(320, 24, 'Processes (run time, arrival)', 'b') + [['P1', 7, 0], ['P2', 4, 2], ['P3', 1, 4], ['P4', 4, 5]].map((p, i) => box(40 + i * 150, 50, 130, 60, cls[p[0]]) + t(105 + i * 150, 76, p[0], 'b') + t(105 + i * 150, 98, p[1] + ' ms, arrives ' + p[2], 's')).join('');
+    return [
+      { svg: procs + t(320, 160, 'Four processes: P1 7, P2 4, P3 1, P4 4', 's'), cap: 'Four processes with run times 7, 4, 1, 4 and arrival times 0, 2, 4, 5. We draw each algorithm\'s schedule and compute waiting times.' },
+      { svg: gantt([['P1', 0, 7], ['P2', 7, 11], ['P3', 11, 12], ['P4', 12, 16]], 'FCFS (non-preemptive)', 'waits 0 + 5 + 7 + 7 = 19, average 4.75'), cap: 'FCFS: run in arrival order. P2 arrived at 2 but starts at 7, so it waits 5.' },
+      { svg: gantt([['P1', 0, 7], ['P3', 7, 8], ['P2', 8, 12], ['P4', 12, 16]], 'SJF (non-preemptive)', 'waits 0 + 6 + 3 + 7 = 16, average 4'), cap: 'SJF: when P1 finishes at 7, the shortest ready job (P3, 1 ms) goes next.' },
+      { svg: gantt([['P1', 0, 2], ['P2', 2, 4], ['P3', 4, 5], ['P2', 5, 7], ['P4', 7, 11], ['P1', 11, 16]], 'SRTF (preemptive)', 'total wait 12, average 3'), cap: 'SRTF: each new arrival with less time remaining preempts the running job. P1 is interrupted twice.' },
+      { svg: gantt([['P1', 0, 3], ['P2', 3, 6], ['P1', 6, 9], ['P3', 9, 10], ['P4', 10, 13], ['P2', 13, 14], ['P1', 14, 15], ['P4', 15, 16]], 'Round Robin (quantum 3)', 'total wait 28, average 7'), cap: 'Round Robin: every 3 ms the running process goes to the back of the queue. Fair, but more switching and a higher average wait here.' },
+    ];
+  }
+
+  // ── Heap allocator with an in-place free list ──────────────────
+  function freelistViz() {
+    const X = a => 30 + a * 2.2656;
+    const blk = (a, b, label, cls) => box(X(a), 60, X(b) - X(a), 56, cls, 4) + t((X(a) + X(b)) / 2, 84, label, 'b') + t((X(a) + X(b)) / 2, 104, (b - a) + ' B', 's');
+    const addr = [0, 116, 182, 256].map(a => t(X(a), 140, String(a), 's')).join('');
+    const f = (blocks, list, cap) => ({ svg: t(320, 30, 'Heap: 256 bytes (16-byte headers)', 'b') + blocks + addr + t(320, 180, list, 'm b'), cap });
+    return [
+      f(blk(0, 256, 'Free', 'ok'), 'free list: head → [0: 256]', 'The whole 256-byte heap is one free block. Its header (size, next) lives inside it.'),
+      f(blk(0, 116, 'Used', 'a') + blk(116, 256, 'Free', 'ok'), 'free list: head → [116: 140]', 'malloc(100): 100 + 16 header = 116 bytes are split off. The leftover 140 bytes is the new free block.'),
+      f(blk(0, 116, 'Used', 'a') + blk(116, 182, 'Used', 'a') + blk(182, 256, 'Free', 'ok'), 'free list: head → [182: 74]', 'malloc(50): 50 + 16 = 66 more bytes split off. 74 bytes stay free.'),
+      f(blk(0, 116, 'Free', 'ok') + blk(116, 182, 'Used', 'a') + blk(182, 256, 'Free', 'ok'), 'free list: head → [0: 116] → [182: 74]', 'free() on the first block inserts it at the head of the free list. Free space is now split into two pieces: external fragmentation.'),
+      f(blk(0, 116, 'Free', 'ok') + blk(116, 182, 'Free', 'ok') + blk(182, 256, 'Free', 'ok'), 'free list: [116: 66] → [0: 116] → [182: 74]', 'The second free() puts [116: 66] at the head. Three free blocks sit side by side.'),
+      f(blk(0, 256, 'Free', 'ok'), 'free list: head → [0: 256]', 'Coalescing merges the consecutive free blocks into one 256-byte block again.'),
+    ];
+  }
+
+  // ── Paging: translating a virtual address ──────────────────────
+  function pagingViz() {
+    const addr = (x, y, a, b, la, lb, c1, c2) => box(x, y, 90, 50, c1) + t(x + 45, y + 32, a, 'm b') + box(x + 90, y, 150, 50, c2) + t(x + 165, y + 32, b, 'm b') + t(x + 45, y + 70, la, 's') + t(x + 165, y + 70, lb, 's');
+    const table = hi => t(500, 24, 'Page table', 'b') + [['00', '01'], ['01', '11'], ['10', '00'], ['11', '10']].map((r, i) => box(420, 36 + i * 36, 160, 32, hi === r[0] ? 'a' : '', 4) + t(450, 58 + i * 36, 'page ' + r[0], 'm') + t(540, 58 + i * 36, 'frame ' + r[1], 'm')).join('');
+    return [
+      { svg: t(135, 24, 'Virtual address', 'b') + addr(15, 40, '10', '1011', 'page number', 'offset', 'a', '') + table(''), cap: 'A 6-bit virtual address with 16-byte pages: 2 bits of page number and 4 bits of offset. 101011 is page 10, offset 1011.' },
+      { svg: t(135, 24, 'Virtual address', 'b') + addr(15, 40, '10', '1011', 'page number', 'offset', 'a', '') + table('10') + line(105, 92, 420, 126, 'a'), cap: 'Step 1: look up page number 10 in the process\'s page table. It maps to page frame 00.' },
+      { svg: t(135, 24, 'Virtual address', 'b') + addr(15, 40, '10', '1011', 'page number', 'offset', '', '') + table('10') + t(135, 158, 'page 10 → frame 00, offset copied', 's') + t(135, 196, 'Physical address', 'b') + addr(15, 206, '00', '1011', 'frame number', 'offset', 'ok', 'ok'), cap: 'Step 2: the frame number (00) replaces the page number, and the offset (1011) is unchanged. Physical address: 001011.' },
+    ];
+  }
+
+
   const DEFS = {
     memory:    { title: 'Stack, heap and pointers',                vb: '0 0 640 270', frames: memory },
     ptrarith:  { title: 'Pointer arithmetic steps by element size', vb: '0 0 640 230', frames: ptrarith },
@@ -519,6 +598,11 @@ const VIZ = (() => {
     clients:   { title: 'Serving many clients',                     vb: '0 0 640 260', frames: clients },
     pipe:      { title: 'A pipe between parent and child',          vb: '0 0 640 260', frames: pipe },
     shm:       { title: 'Shared memory between two processes',      vb: '0 0 640 260', frames: shm },
+    sched:     { title: 'CPU scheduling: the same four processes',     vb: '0 0 640 190', frames: schedViz },
+    freelist:  { title: 'A heap allocator and its free list',          vb: '0 0 640 200', frames: freelistViz },
+    paging:    { title: 'Paging: virtual to physical address',         vb: '0 0 640 300', frames: pagingViz },
+    osstack:   { title: 'The OS stack and a system call',              vb: '0 0 640 250', frames: osstack },
+    signals:   { title: 'A signal from child to parent',               vb: '0 0 640 250', frames: signalsViz },
     bufio:     { title: 'Buffered I/O: many writes, one system call', vb: '0 0 640 240', frames: bufio },
     offset:    { title: 'File offsets: separate open vs dup',        vb: '0 0 640 250', frames: offsetViz },
     epoll:     { title: 'epoll: only the ready descriptors',         vb: '0 0 640 240', frames: epollViz },

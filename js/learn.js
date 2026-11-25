@@ -162,7 +162,7 @@ function renderChapterList() {
       </div>
       ${reviewBannerHtml()}
       <div class="chapter-map">
-      ${CHAPTERS.map(ch => {
+      ${CHAPTERS.filter(c => c.lessons.length).map(ch => {
         const done = isChapterComplete(AppState, ch);
         const isCurrent = !done && CHAPTERS.find(c => !isChapterComplete(AppState, c)) === ch;
         const doneLessons = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
@@ -206,7 +206,7 @@ function showChapter(chId) {
         const ldone = lrn && prc && qz;
         return `<div class="lesson-item${ldone?' done':''}" onclick="showLesson('${lesson.id}')">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--dim);min-width:28px">${String(i+1).padStart(2,'0')}</div>
-          <div class="lesson-title">${lesson.title}${reviewCountForLesson(lesson.id) ? ` <span class="tag">${reviewCountForLesson(lesson.id)} to review</span>` : ''}</div>
+          <div class="lesson-title">${lesson.title}${lesson.deck ? ` <span class="lesson-deck">Slides ${lesson.deck}</span>` : ''}${reviewCountForLesson(lesson.id) ? ` <span class="tag">${reviewCountForLesson(lesson.id)} to review</span>` : ''}</div>
           <div class="lesson-stages">
             <div class="stage-dot${lrn?' done':''}" title="Learn">L</div>
             <div class="stage-dot${prc?' done':''}" title="Practice">P</div>

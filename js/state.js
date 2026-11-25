@@ -4,6 +4,7 @@ const STATE_KEY = 'fullcourt_v1';
 
 const DEFAULT_STATE = {
   version: 1,
+  curriculum: 2,       // 2 = lessons rebuilt from the course slides (old lesson progress does not carry over)
   player: {
     name: 'Rookie',
     level: 1,
@@ -36,6 +37,10 @@ function loadState() {
     const raw = localStorage.getItem(STATE_KEY);
     if (raw) {
       const s = JSON.parse(raw);
+      if (s.curriculum !== 2) {         // lessons were rebuilt: reset lesson progress, keep XP, cards and the team
+        ['lessons', 'chapters', 'playoffs', 'review', 'exam', 'drills'].forEach(k => { delete s[k]; });
+        s.curriculum = 2;
+      }
       // Merge defaults for any missing keys
       return refreshSavedCards(deepMerge(DEFAULT_STATE, s));
     }
@@ -190,7 +195,7 @@ function teamOVR(team) {
 // Get season progress info
 function getSeasonProgress(state) {
   let totalLessons = 0, doneLessons = 0, doneChapters = 0;
-  CHAPTERS.filter(c => !c.bonus).forEach(ch => {
+  CHAPTERS.filter(c => !c.bonus && c.lessons.length).forEach(ch => {
     totalLessons += ch.lessons.length;
     ch.lessons.forEach(l => { if (isLessonDone(state, l.id)) doneLessons++; });
     if (isChapterComplete(state, ch)) doneChapters++;

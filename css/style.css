@@ -816,3 +816,4 @@ button.code-line:hover:not(:disabled) { background: rgba(255,255,255,.08); }
 table.mini { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; display: block; overflow-x: auto; }
 table.mini th, table.mini td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 table.mini th { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+.lesson-deck { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--dim); letter-spacing: .3px; }

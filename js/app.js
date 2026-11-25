@@ -210,7 +210,7 @@ function renderDashboard() {
               <div style="font-size:14px;color:var(--dim);margin-top:8px">${prog} / ${total} lessons · ${sp.doneChapters}/${sp.totalChapters} topics</div>
             </div>
           </div>
-          ${CHAPTERS.filter(c => !c.bonus).map(ch => {
+          ${CHAPTERS.filter(c => !c.bonus && c.lessons.length).map(ch => {
             const done = isChapterComplete(AppState, ch);
             const doneLs = ch.lessons.filter(l => isLessonDone(AppState, l.id)).length;
             const p = Math.round(doneLs/ch.lessons.length*100);

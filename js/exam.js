@@ -3,12 +3,12 @@
 // The Championship mirrors the real final: 15 short answers (2 pts) + 5 long answers (4 pts), timed, self-graded against model answers.
 
 const PLAYOFF = { roundCount: 10, roundMinutes: 15, passPct: 70, shortN: 15, longN: 5, finalMinutes: 180 };
-const ROUND_PACK = { ch1: 'Bronze Pack', ch2: 'Silver Pack', ch3: 'Silver Pack', ch4: 'Gold Pack', ch5: 'Gold Pack', ch6: 'Silver Pack' };
+const roundPackOf = id => (CHAPTERS.find(c => c.id === id) || {}).roundPack || 'Bronze Pack';
 const FINAL_PACK = 'Diamond Premium';
 
 let examState = null;
 
-const coreChapters = () => CHAPTERS.filter(c => !c.bonus);
+const coreChapters = () => CHAPTERS.filter(c => !c.bonus && c.lessons.length);
 const roundRec = id => (AppState.playoffs && AppState.playoffs[id]) || { best: 0, attempts: 0, passed: false };
 const finalRec = () => AppState.exam || { best: 0, attempts: 0, passed: false };
 const roundNo = ch => coreChapters().indexOf(ch) + 1;
@@ -53,7 +53,7 @@ function activateView(name) {
 function roundCardHtml(ch, label) {
   const st = roundStatus(ch);
   const rec = st.rec;
-  const rw = ROUND_PACK[ch.id];
+  const rw = roundPackOf(ch.id);
   const action = st.state === 'locked'
     ? `<button class="btn btn-secondary btn-sm" onclick="showChapter('${ch.id}');navigate('learn')">Study</button>`
     : `<button class="btn ${st.state === 'passed' ? 'btn-secondary' : 'btn-primary'} btn-sm" onclick="showRoundIntro('${ch.id}')">${st.state === 'passed' ? 'Retake' : 'Play round'}</button>`;
@@ -115,7 +115,7 @@ function showRoundIntro(chId) {
           <li><strong>${PLAYOFF.roundCount} questions</strong> drawn from every lesson in this topic.</li>
           <li><strong>${PLAYOFF.roundMinutes} minutes.</strong> Unanswered questions count as wrong.</li>
           <li><strong>No feedback until the end.</strong> You cannot go back.</li>
-          <li><strong>Pass with ${PLAYOFF.passPct}%.</strong> The first pass earns a ${ROUND_PACK[ch.id]} and 100 XP.</li>
+          <li><strong>Pass with ${PLAYOFF.passPct}%.</strong> The first pass earns a ${roundPackOf(ch.id)} and 100 XP.</li>
           <li>Leaving this screen ends the attempt. Misses go into your review queue.</li>
         </ul>
         <button class="btn btn-gold btn-lg" style="margin-top:16px" onclick="startRound('${ch.id}')">Tip off</button>
@@ -316,7 +316,7 @@ function finishExam() {
     : ((AppState.playoffs = AppState.playoffs || {})[st.chId] = AppState.playoffs[st.chId] || { best: 0, attempts: 0, passed: false });
   const firstPass = passed && !rec.passed;
   rec.attempts++; rec.best = Math.max(rec.best, pct); if (passed) rec.passed = true;
-  const packType = isFinal ? FINAL_PACK : ROUND_PACK[st.chId];
+  const packType = isFinal ? FINAL_PACK : roundPackOf(st.chId);
   let packIdx = -1;
   if (firstPass) { givePack(AppState, packType, isFinal ? 'Championship' : st.title); packIdx = AppState.packQueue.length - 1; }
   const xp = Math.round(earned * (isFinal ? 4 : 5)) + (firstPass ? (isFinal ? 300 : 100) : 0);

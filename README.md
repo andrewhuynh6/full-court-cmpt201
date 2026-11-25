@@ -1,34 +1,12 @@
-# CMPT201 Lab — a game-style study app for SFU CMPT 201 
+# CMPT201 Lab — a game-style study app for SFU CMPT 201
 
-A basketball-themed educational web app for CMPT 201 (Systems Programming). Learn, earn player cards, and build your team.
+A basketball-themed study app for CMPT 201 (Systems Programming). Lessons follow the course slides, one lesson per slide deck.
 
-## Features
-- **Learn Mode** — Concept breakdowns with code examples for all CMPT 201 topics
-- **Practice** — Interactive multiple-choice exercises with immediate feedback
-- **Quiz** — Scored quizzes that earn XP
-- **Game Day** — Full-chapter basketball game where correct answers score points
-- **Player Cards** — Bronze / Silver / Gold / Diamond rarity system
-- **Pack Opening** — Earn and open player packs with reveal animations
-- **Team Management** — Build and upgrade your starting lineup
-- **Season Progression** — SEASON 01: Road to the Championship
+## How it works
+- **Learn**: 6 topics (+ an optional security bonus), 20 lessons, each in short steps with a quick check and a diagram. Every practice and quiz question is written only from what its lesson teaches.
+- **Playoffs**: each round is an exam on one topic. It unlocks after you finish the topic's lessons and pass the previous round. Passing every round unlocks the **Championship**, a timed written final (15 short + 5 long answers) that you self-grade against model answers.
+- **Daily drills**: quick side tasks that each earn a 5-card pack; harder drills earn better packs.
+- **Cards**: collect NBA players in 8 tiers, build a team, and see which players are still locked.
+- **Review**: questions you miss are remembered and re-asked.
 
-## Topics Covered
-
-1. **Training Camp** — C Fundamentals (Pointers, Dynamic Memory)
-2. **Season Opener** — Processes & Threads (fork, pthreads, mutexes, semaphores)
-3. **Mid-Season** — File Systems (File I/O, Inodes, Hard/Soft Links)
-4. **Playoffs** — Networking (Sockets, AF_INET, Multiple Clients, select)
-5. **Championship** — IPC (Pipes, FIFOs, Shared Memory)
-
-## Tech Stack
-
-- Vanilla HTML, CSS, JavaScript — no frameworks
-- `localStorage` for progress persistence
-- Pure CSS/SVG player card artwork
-- Responsive desktop + mobile layout
-
-## Play
-
-Open `index.html` in a browser, or visit the [GitHub Pages link](#).
-
-> **Learn → Practice → Play → Earn Cards → Build Your Team**
+Static HTML, CSS and JavaScript; no build step. Open `index.html` or serve the folder.
