@@ -51,10 +51,10 @@
 
 /* Dark theme */
 :root[data-theme="dark"] {
-  --arena:       #0E1218;
-  --panel:       #171D26;
-  --panel2:      #1F2733;
-  --panel3:      #2A3442;
+  --arena:       #1A1A1C;
+  --panel:       #232326;
+  --panel2:      #2B2B2F;
+  --panel3:      #38383D;
   --ball:        #FF7A3D;
   --btn:         #C44E18;
   --ball-text:   #FF9566;
@@ -62,19 +62,19 @@
   --ball2:       rgba(255,122,61,.14);
   --gold:        #FFB800;
   --white:       #FFFFFF;
-  --text:        #E3D8C8;
-  --dim:         #9AA9B8;
+  --text:        #E6E3DD;
+  --dim:         #A6A6AC;
   --border:      rgba(255,255,255,.16);
-  --line:        rgba(255,255,255,.08);
+  --line:        rgba(255,255,255,.09);
   --ok:          #3DDC84;
   --on-ok:       #06240F;
   --bad:         #FF6B6B;
-  --sidebar-top: #12171F;
-  --sidebar-bot: #12171F;
-  --code-bg:     #0B0F15;
+  --sidebar-top: #1A1A1C;
+  --sidebar-bot: #1A1A1C;
+  --code-bg:     #131315;
   --code-text:   #A8C8A0;
-  --hero-a:      #2B1B12;
-  --hero-b:      #171D26;
+  --hero-a:      #2D2119;
+  --hero-b:      #232326;
   --tier-rookie: #A0AAB8;
   --tier-bench-player: #D9A066;
   --tier-starter: #5EEAD4;
@@ -817,3 +817,38 @@ table.mini { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8p
 table.mini th, table.mini td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 table.mini th { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
 .lesson-deck { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--dim); letter-spacing: .3px; }
+
+/* ── Desktop lesson pages: use the width ────────────────────────── */
+@media (min-width: 1100px) {
+  .lesson-page { max-width: 1560px; padding-left: 56px; padding-right: 56px; }
+  .lesson-page .step-layout { max-width: none; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; }
+  .lesson-page .step-layout .step-wrap { max-width: 1120px; }
+  .lesson-page .step-card { padding: 44px 52px; }
+  .lesson-page .step-card h3 { font-size: 32px; }
+  .lesson-page .learn-content { max-width: none; }
+  .lesson-page .learn-content p, .lesson-page .learn-content ul, .lesson-page .learn-content ol { font-size: 19px; line-height: 1.75; }
+  .lesson-page .learn-content .lead { font-size: 22px; }
+  .lesson-page .code-block { font-size: 16.5px; padding: 22px 26px; }
+  .lesson-page .tip-box { font-size: 17.5px; }
+  .lesson-page .step-check .mcq-q-text, .lesson-page .mcq-q-text { font-size: 20px; }
+  .lesson-page .mcq-opt { font-size: 18px; padding: 16px 18px; }
+  .lesson-page .recap-list li { font-size: 18px; }
+  .lesson-page .step-count { font-size: 15px; }
+  .lesson-page .outline-item { font-size: 15.5px; padding: 10px 12px; }
+  .lesson-page .stage-tab { font-size: 16px; padding: 12px 28px; }
+  .lesson-page .step-nav .btn { min-height: 48px; padding: 0 26px; font-size: 16px; }
+  .lesson-page .mcq-wrap { max-width: 1040px; }
+  .lesson-page .mcq-question { padding: 36px 40px; }
+  .lesson-page .viz { padding: 26px; }
+  .lesson-page .viz svg { max-height: 560px; }
+  .lesson-page .viz-cap { font-size: 18px; }
+  .lesson-page .vz-t { font-size: 15px; }
+  .lesson-page .vz-t.s { font-size: 13.5px; }
+  .lesson-page .vz-t.m { font-size: 14.5px; }
+  .lesson-page .ans-box { font-size: 18px; }
+  .lesson-page .model-text, .lesson-page .pt-row { font-size: 18px; }
+}
+@media (min-width: 1700px) {
+  .lesson-page .step-layout .step-wrap { max-width: 1240px; }
+  .lesson-page .learn-content p, .lesson-page .learn-content ul, .lesson-page .learn-content ol { font-size: 20px; }
+}

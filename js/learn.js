@@ -260,7 +260,7 @@ function renderLesson() {
         <button class="btn btn-secondary btn-sm" onclick="showChapter('${currentChapter.id}')">← Back</button>
       </div>
     </div>
-    <div class="page-wrap">
+    <div class="page-wrap lesson-page">
       <div class="stage-tabs">
         <button class="stage-tab${currentStage==='learn'?' active':''}${lrn?' done':''}" onclick="switchStage('learn')">${lrn?'✓ ':''}Learn</button>
         <button class="stage-tab${currentStage==='practice'?' active':''}${prc?' done':''}" onclick="switchStage('practice')" ${!lrn&&!prc?'disabled':''}>${prc?'✓ ':''}Practice</button>
